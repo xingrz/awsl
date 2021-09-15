@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "AWSL",
+  "version": "1.0",
+  "description": "Auto AWSLing",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://weibo.com/*"
+      ],
+      "js": [
+        "inject.js"
+      ]
+    }
+  ]
+}
