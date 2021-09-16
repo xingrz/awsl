@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      0.1.1
+// @version      0.1.2
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -31,12 +31,12 @@
     const forwardLayer = document.querySelector('.layer_forward:not([awsl="yes"])');
     if (!forwardLayer) return;
 
-    forwardLayer.setAttribute('awsl', 'yes');
-
-    const textarea = forwardLayer.querySelector('textarea.W_input');
+    const textarea = forwardLayer.querySelector('textarea.W_input:focus');
     const buttonBar = forwardLayer.querySelector('.btn.W_fr');
     const submit = forwardLayer.querySelector('.W_btn_a[node-type="submit"]');
     if (!textarea || !buttonBar || !submit) return;
+
+    forwardLayer.setAttribute('awsl', 'yes');
 
     const buttons = [];
     function disableAllButtons() {
