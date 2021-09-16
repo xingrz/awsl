@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      0.3.0
+// @version      0.3.1
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -36,6 +36,9 @@
       button.title = word;
       button.href = 'javascript:void(0)';
       button.addEventListener('click', () => {
+        if (textarea.value == '请输入转发理由') {
+          textarea.value = '';
+        }
         textarea.value = word + textarea.value;
         submit.click();
         for (const btn of buttons) {
@@ -51,7 +54,7 @@
     const forwardLayer = document.querySelector('.layer_forward:not([awsl="yes"])');
     if (!forwardLayer) return;
 
-    const textarea = forwardLayer.querySelector('textarea.W_input:focus');
+    const textarea = forwardLayer.querySelector('textarea.W_input');
     const buttonBar = forwardLayer.querySelector('.btn.W_fr');
     const limitsBar = buttonBar.querySelector('.limits');
     const submit = buttonBar.querySelector('.W_btn_a[node-type="submit"]');
