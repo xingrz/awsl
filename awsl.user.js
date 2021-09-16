@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      0.3.1
+// @version      0.3.2
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -27,7 +27,7 @@
     }
 
     const buttons = [];
-    const words = await GM.getValue('words', DEFAULT_WORDS);
+    const words = await getValue('words', DEFAULT_WORDS);
     for (const word of words.split(';').filter(t => !!t).slice(0, MAX_WORDS)) {
       const button = document.createElement('a');
       button.className = 'awsl-button W_btn_b';
@@ -81,7 +81,7 @@
     const configInput = configDiv.querySelector('.awsl-config-input');
     const configSave = configDiv.querySelector('.awsl-config-save');
     configSave.addEventListener('click', async () => {
-      await GM.setValue('words', configInput.value);
+      await setValue('words', configInput.value);
       await recreateButtons(buttonBar, textarea, submit);
       configDiv.style.display = 'none';
     })
@@ -94,7 +94,7 @@
     `;
     configBtn.href = 'javascript:void(0)';
     configBtn.addEventListener('click', async () => {
-      configInput.value = await GM.getValue('words', DEFAULT_WORDS);
+      configInput.value = await getValue('words', DEFAULT_WORDS);
       configDiv.style.display = configDiv.style.display == 'none' ? 'block' : 'none';
       configInput.focus();
     });
@@ -104,5 +104,29 @@
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+
+  const ENV_GM = (typeof GM != 'undefined');
+
+  async function getValue(key, defaultValue) {
+    if (ENV_GM) {
+      return await GM.getValue(key, defaultValue);
+    } else {
+      return new Promise((resolve) => {
+        chrome.storage.local.get(key, (value) => {
+          resolve(value[key] ?? defaultValue);
+        });
+      });
+    }
+  }
+
+  async function setValue(key, value) {
+    if (ENV_GM) {
+      await GM.setValue(key, value);
+    } else {
+      await new Promise((resolve) => {
+        chrome.storage.local.set({ [key]: value }, resolve);
+      });
+    }
+  }
 
 })();
