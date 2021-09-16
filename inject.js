@@ -1,48 +1,48 @@
 'use strict';
-window.addEventListener('load', () => {
+(() => {
 
-  let forwarding = false;
+  function createButton(text, onclick) {
+    const button = document.createElement('a');
+    button.className = 'W_btn_b';
+    button.style.verticalAlign = 'top';
+    button.style.marginRight = '8px';
+    button.innerHTML = text;
+    button.href = 'javascript:void(0)';
+    button.addEventListener('click', onclick);
+    return button;
+  }
 
   const observer = new MutationObserver(() => {
-    for (const handle of document.querySelectorAll('.WB_feed_handle ul:not([awsl="yes"])')) {
-      const forward = handle.querySelector('a[action-type="fl_forward"]');
-      if (!forward) continue;
+    const forwardLayer = document.querySelector('.layer_forward:not([awsl="yes"])');
+    if (!forwardLayer) return;
 
-      const a = document.createElement('a');
-      a.className = 'S_txt2';
-      a.innerHTML = `
-        <span class="pos"><span class="line S_line1"><span>
-          <em class="W_ficon ficon_forward S_ficon"></em>
-          <em>AWSL!</em>
-        </span></span></span>
-      `;
+    forwardLayer.setAttribute('awsl', 'yes');
 
-      a.addEventListener('click', () => {
-        forwarding = true;
-        forward.click();
-      });
+    const textarea = forwardLayer.querySelector('textarea.W_input');
+    const buttonBar = forwardLayer.querySelector('.btn.W_fr');
+    const submit = forwardLayer.querySelector('.W_btn_a[node-type="submit"]');
+    if (!textarea || !buttonBar || !submit) return;
 
-      const li = document.createElement('li');
-      li.appendChild(a);
-
-      handle.prepend(li);
-      handle.setAttribute('awsl', 'yes');
+    const buttons = [];
+    function disableAllButtons() {
+      buttons.forEach((btn) => btn.classList.add('W_btn_b_disable'));
     }
 
-    if (forwarding) {
-      const forwardLayer = document.querySelector('.layer_forward');
-      if (!forwardLayer) return;
-
-      forwarding = false;
-
-      const textarea = forwardLayer.querySelector('textarea.W_input');
-      const submit = forwardLayer.querySelector('.W_btn_a[node-type="submit"]');
-
-      textarea.value = 'awsl' + textarea.value;
+    buttons.push(createButton('草', () => {
+      textarea.value = '草' + textarea.value;
+      disableAllButtons();
       submit.click();
-    }
+    }));
+
+    buttons.push(createButton('awsl', () => {
+      textarea.value = 'awsl' + textarea.value;
+      disableAllButtons();
+      submit.click();
+    }));
+
+    buttons.forEach((btn) => buttonBar.insertBefore(btn, submit));
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-});
+})();
