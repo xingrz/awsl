@@ -21,7 +21,7 @@
   const DEFAULT_WORDS = '草;awsl';
   const MAX_WORDS = 3;
 
-  async function recreateButtons(buttonBar, textarea, submit) {
+  async function recreateButtonsV6(buttonBar, textarea, submit) {
     for (const btn of buttonBar.querySelectorAll('.awsl-button')) {
       btn.remove();
     }
@@ -50,7 +50,7 @@
     }
   }
 
-  const observer = new MutationObserver(async () => {
+  async function handleDocumentChangesV6() {
     const forwardLayer = document.querySelector('.layer_forward:not([awsl="yes"])');
     if (!forwardLayer) return;
 
@@ -82,7 +82,7 @@
     const configSave = configDiv.querySelector('.awsl-config-save');
     configSave.addEventListener('click', async () => {
       await setValue('words', configInput.value);
-      await recreateButtons(buttonBar, textarea, submit);
+      await recreateButtonsV6(buttonBar, textarea, submit);
       configDiv.style.display = 'none';
     })
 
@@ -100,9 +100,12 @@
     });
     limitsBar.append(configBtn);
 
-    await recreateButtons(buttonBar, textarea, submit);
-  });
+    await recreateButtonsV6(buttonBar, textarea, submit);
+  }
 
+  const observer = new MutationObserver(() => {
+    handleDocumentChangesV6();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 
   const ENV_GM = (typeof GM != 'undefined');
