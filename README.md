@@ -11,13 +11,17 @@ AWSL
 
 ### 方式 1：油猴脚本
 
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或其它兼容的脚本管理器
-2. 打开 [awsl.user.js][script-url] 并安装
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或其它兼容的脚本管理器；
+2. 点击下方图标安装 (或手动打开 [awsl.user.js][script-url] 将脚本添加到管理器中)：
+
+   [![script-img]][script-url]
 
 ### 方式 2：Chrome 扩展
 
-1. 将本项目克隆到本地
-2. 在扩展管理 (`chrome://extensions/`) 中使用「加载已解压的扩展程序」添加本扩展
+1. 打开扩展管理 (`chrome://extensions/`)页面；
+2. 点击下方图标下载压缩包，并拖动到扩展管理页面安装：
+
+   [![chrome-img]][chrome-url]
 
 ## 协议
 
@@ -34,4 +38,8 @@ AWSL
 [commits-img]: https://img.shields.io/github/last-commit/xingrz/awsl?style=flat-square
 [commits-url]: https://github.com/xingrz/awsl/commits/master
 
+[script-img]: https://img.shields.io/github/v/tag/xingrz/awsl?label=awsl&logo=tampermonkey&logoColor=white&sort=semver&style=for-the-badge
 [script-url]: https://raw.githubusercontent.com/xingrz/awsl/master/awsl.user.js
+
+[chrome-img]: https://img.shields.io/github/v/tag/xingrz/awsl?label=awsl&logo=google-chrome&logoColor=white&sort=semver&style=for-the-badge
+[chrome-url]: https://github.com/xingrz/awsl/archive/refs/heads/master.zip
