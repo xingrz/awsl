@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      0.3.2
+// @version      0.3.3
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -54,19 +54,22 @@
     const forwardLayer = document.querySelector('.layer_forward:not([awsl="yes"])');
     if (!forwardLayer) return;
 
-    const textarea = forwardLayer.querySelector('textarea.W_input');
-    const buttonBar = forwardLayer.querySelector('.btn.W_fr');
+    const textarea = forwardLayer.querySelector('.WB_publish textarea.W_input');
+    const publishBar = forwardLayer.querySelector('.WB_publish .p_opt');
+    const buttonBar = publishBar.querySelector('.btn.W_fr');
+    const optionBar = publishBar.querySelector('.opt')
     const limitsBar = buttonBar.querySelector('.limits');
     const submit = buttonBar.querySelector('.W_btn_a[node-type="submit"]');
-    if (!textarea || !buttonBar || !limitsBar || !submit) return;
+    if (!textarea || !publishBar || !buttonBar || !optionBar || !limitsBar || !submit) return;
 
     forwardLayer.setAttribute('awsl', 'yes');
 
     buttonBar.style.float = 'none';
-    buttonBar.style.textAlign = 'right';
+    buttonBar.style.display = 'flex';
+    buttonBar.style.justifyContent = 'flex-end';
 
     const configDiv = document.createElement('div');
-    configDiv.style = 'display: none; margin: 12px 0 16px; text-align: left';
+    configDiv.style = 'display: none; margin-bottom: 16px; text-align: left';
     configDiv.innerHTML = `
       <div style="margin-bottom: 2px">转发词组（以分号 ";" 间隔，最多3个）：</div>
       <div style="display: flex;">
@@ -76,7 +79,7 @@
         </a>
       </div>
     `;
-    buttonBar.append(configDiv);
+    publishBar.insertBefore(configDiv, optionBar);
 
     const configInput = configDiv.querySelector('.awsl-config-input');
     const configSave = configDiv.querySelector('.awsl-config-save');
