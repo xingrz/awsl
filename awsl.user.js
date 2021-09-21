@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      0.3.3
+// @version      0.4.0
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -21,17 +21,18 @@
   const DEFAULT_WORDS = '草;awsl';
   const MAX_WORDS = 3;
 
-  async function recreateButtonsV6(buttonBar, textarea, submit) {
+  async function recreateButtonsV6(buttonBar, extraBar, textarea, submit) {
     for (const btn of buttonBar.querySelectorAll('.awsl-button')) {
       btn.remove();
     }
+    extraBar.innerHTML = '';
 
     const buttons = [];
-    const words = await getValue('words', DEFAULT_WORDS);
-    for (const word of words.split(';').filter(t => !!t).slice(0, MAX_WORDS)) {
+    const words = (await getValue('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
+
+    function createButton(word) {
       const button = document.createElement('a');
       button.className = 'awsl-button W_btn_b';
-      button.style = 'vertical-align: top; margin-right: 8px; max-width: 50px; overflow: hidden; text-overflow: ellipsis;';
       button.innerHTML = word;
       button.title = word;
       button.href = 'javascript:void(0)';
@@ -46,7 +47,20 @@
         }
       });
       buttons.push(button);
+      return button;
+    }
+
+    for (const word of words.slice(0, MAX_WORDS)) {
+      const button = createButton(word);
+      button.style = 'vertical-align: top; margin-right: 8px; max-width: 50px; overflow: hidden; text-overflow: ellipsis;';
       buttonBar.insertBefore(button, submit);
+    }
+    for (const word of words.slice(MAX_WORDS)) {
+      const button = createButton(word);
+      extraBar.append(button);
+    }
+    if (words.length > MAX_WORDS) {
+      extraBar.style.marginBottom = '16px';
     }
   }
 
@@ -68,10 +82,14 @@
     buttonBar.style.display = 'flex';
     buttonBar.style.justifyContent = 'flex-end';
 
+    const extraBar = document.createElement('div');
+    extraBar.style = 'display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px';
+    publishBar.insertBefore(extraBar, optionBar);
+
     const configDiv = document.createElement('div');
     configDiv.style = 'display: none; margin-bottom: 16px; text-align: left';
     configDiv.innerHTML = `
-      <div style="margin-bottom: 2px">转发词组（以分号 ";" 间隔，最多3个）：</div>
+      <div style="margin-bottom: 2px">转发词组（以分号 ";" 间隔）：</div>
       <div style="display: flex;">
         <input class="awsl-config-input W_input" style="flex: 1;" />
         <a class="awsl-config-save W_btn_b" href="javascript:void(0)" style="margin-top: 2px; margin-left: 8px;">
@@ -85,7 +103,7 @@
     const configSave = configDiv.querySelector('.awsl-config-save');
     configSave.addEventListener('click', async () => {
       await setValue('words', configInput.value);
-      await recreateButtonsV6(buttonBar, textarea, submit);
+      await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
       configDiv.style.display = 'none';
     })
 
@@ -103,7 +121,7 @@
     });
     limitsBar.append(configBtn);
 
-    await recreateButtonsV6(buttonBar, textarea, submit);
+    await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
   }
 
   const observer = new MutationObserver(() => {
