@@ -3,7 +3,7 @@ AWSL
 
 [![version][version-img]][script-url] [![size][size-img]][script-url] [![license][license-img]][license-url] [![issues][issues-img]][issues-url] [![stars][stars-img]][stars-url] [![commits][commits-img]][commits-url]
 
-在微博自动转发「草」和「awsl」。
+给微博增加一键转发功能，支持配置不同的一键转发短语。
 
 ![](screenshot.png)
 
