@@ -1,0 +1,32 @@
+{
+  "name": "awsl",
+  "version": "1.0.0",
+  "description": "Auto AWSLing",
+  "scripts": {
+    "dev": "webpack watch --config webpack.config.js",
+    "build": "webpack build --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xingrz/chrome-awsl.git"
+  },
+  "keywords": [
+    "chrome",
+    "tampermonkey",
+    "weibo"
+  ],
+  "author": "XiNGRZ <hi@xingrz.me>",
+  "license": "WTFPL",
+  "bugs": {
+    "url": "https://github.com/xingrz/chrome-awsl/issues"
+  },
+  "homepage": "https://github.com/xingrz/chrome-awsl#readme",
+  "devDependencies": {
+    "@types/chrome": "^0.0.159",
+    "@types/tampermonkey": "^4.0.5",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
+    "webpack": "^5.58.2",
+    "webpack-cli": "^4.9.1"
+  }
+}
