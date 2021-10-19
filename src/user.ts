@@ -1,10 +1,11 @@
 import { getValue, setValue } from './kv';
+import { $, $$, on, style, toggle, create, insertBefore, append, attrs } from './dom';
 
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
 
 async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, textarea: HTMLInputElement, submit: HTMLElement) {
-  for (const btn of buttonBar.querySelectorAll('.awsl-button')) {
+  for (const btn of $$(buttonBar, '.awsl-button')) {
     btn.remove();
   }
   extraBar.innerHTML = '';
@@ -12,13 +13,15 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   const buttons: HTMLElement[] = [];
   const words = (await getValue('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
 
-  function createButton(word: string) {
-    const button = document.createElement('a');
-    button.className = 'awsl-button W_btn_b';
+  function createButton(word: string): HTMLElement {
+    const button = create('a');
     button.innerHTML = word;
-    button.title = word;
-    button.href = 'javascript:void(0)';
-    button.addEventListener('click', () => {
+    attrs(button, {
+      'class': ['awsl-button', 'W_btn_b'].join(' '),
+      'title': word,
+      'href': 'javascript:void(0)',
+    });
+    on(button, 'click', () => {
       if (textarea.value == '请输入转发理由') {
         textarea.value = '';
       }
@@ -33,48 +36,61 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   }
 
   for (const word of words.slice(0, MAX_WORDS)) {
-    const button = createButton(word);
-    button.style.cssText = 'vertical-align: top; margin-right: 8px; max-width: 50px; overflow: hidden; text-overflow: ellipsis;';
-    buttonBar.insertBefore(button, submit);
+    insertBefore(buttonBar, submit, () => style(createButton(word), {
+      'vertical-align': 'top',
+      'margin-right': '8px',
+      'max-width': '50px',
+      'overflow': 'hidden',
+      'text-overflow': 'ellipsis',
+    }));
   }
   for (const word of words.slice(MAX_WORDS)) {
-    const button = createButton(word);
-    extraBar.append(button);
+    append(extraBar, () => createButton(word));
   }
   if (words.length > MAX_WORDS) {
-    extraBar.style.marginBottom = '16px';
+    style(extraBar, { 'margin-bottom': '16px' });
   }
 }
 
 async function handleDocumentChangesV6() {
-  const forwardLayer = document.querySelector<HTMLElement>('.layer_forward:not([awsl="yes"])');
+  const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
   if (!forwardLayer) return;
 
-  const textarea = forwardLayer.querySelector<HTMLInputElement>('.WB_publish textarea.W_input');
-  const publishBar = forwardLayer.querySelector<HTMLElement>('.WB_publish .p_opt');
+  const textarea = $<HTMLInputElement>(forwardLayer, '.WB_publish textarea.W_input');
+  const publishBar = $<HTMLElement>(forwardLayer, '.WB_publish .p_opt');
   if (!textarea || !publishBar) return;
 
-  const buttonBar = publishBar.querySelector<HTMLElement>('.btn.W_fr');
-  const optionBar = publishBar.querySelector<HTMLElement>('.opt');
+  const buttonBar = $<HTMLElement>(publishBar, '.btn.W_fr');
+  const optionBar = $<HTMLElement>(publishBar, '.opt');
   if (!buttonBar || !optionBar) return;
 
-  const limitsBar = buttonBar.querySelector<HTMLElement>('.limits');
-  const submit = buttonBar.querySelector<HTMLElement>('.W_btn_a[node-type="submit"]');
+  const limitsBar = $<HTMLElement>(buttonBar, '.limits');
+  const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
   if (!limitsBar || !submit) return;
 
   forwardLayer.setAttribute('awsl', 'yes');
 
-  buttonBar.style.float = 'none';
-  buttonBar.style.display = 'flex';
-  buttonBar.style.justifyContent = 'flex-end';
+  style(buttonBar, {
+    'float': 'none',
+    'display': 'flex',
+    'justify-content': 'flex-end',
+  });
 
-  const extraBar = document.createElement('div');
-  extraBar.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px';
-  publishBar.insertBefore(extraBar, optionBar);
+  const extraBar = insertBefore(publishBar, optionBar, () => style(create('div'), {
+    'display': 'flex',
+    'flex-wrap': 'wrap',
+    'justify-content': 'flex-end',
+    'gap': '8px',
+  }));
 
-  const configDiv = document.createElement('div');
-  configDiv.style.cssText = 'display: none; margin-bottom: 16px; text-align: left';
-  configDiv.innerHTML = `
+  const configDiv = insertBefore(publishBar, optionBar, () => {
+    const div = create('div');
+    style(div, {
+      'display': 'none',
+      'margin-bottom': '16px',
+      'text-align': 'left',
+    });
+    div.innerHTML = `
       <div style="margin-bottom: 2px">转发词组（以分号 ";" 间隔）：</div>
       <div style="display: flex;">
         <input class="awsl-config-input W_input" style="flex: 1;" />
@@ -83,29 +99,32 @@ async function handleDocumentChangesV6() {
         </a>
       </div>
     `;
-  publishBar.insertBefore(configDiv, optionBar);
+    return div;
+  });
 
-  const configInput = configDiv.querySelector<HTMLInputElement>('.awsl-config-input')!;
-  const configSave = configDiv.querySelector<HTMLElement>('.awsl-config-save')!;
-  configSave.addEventListener('click', async () => {
+  const configInput = $<HTMLInputElement>(configDiv, '.awsl-config-input')!;
+  on($<HTMLElement>(configDiv, '.awsl-config-save')!, 'click', async () => {
     await setValue('words', configInput.value);
     await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
-    configDiv.style.display = 'none';
-  })
-
-  const configBtn = document.createElement('a');
-  configBtn.className = 'S_txt1';
-  configBtn.innerHTML = `
+    style(configDiv, { 'display': 'none' });
+  });
+  append(limitsBar, () => {
+    const btn = create('a');
+    btn.innerHTML = `
       <span class="W_autocut" style="width: auto;">配置转发</span>
       <i class="W_ficon ficon_set S_ficon_dis" style="margin: 0 0 0 2px; vertical-align: 4px;">*</i>
     `;
-  configBtn.href = 'javascript:void(0)';
-  configBtn.addEventListener('click', async () => {
-    configInput.value = await getValue('words', DEFAULT_WORDS);
-    configDiv.style.display = configDiv.style.display == 'none' ? 'block' : 'none';
-    configInput.focus();
+    attrs(btn, {
+      'class': 'S_txt1',
+      'href': 'javascript:void(0)',
+    });
+    on(btn, 'click', async () => {
+      configInput.value = await getValue('words', DEFAULT_WORDS);
+      toggle(configDiv, 'display', 'none', 'block');
+      configInput.focus();
+    });
+    return btn;
   });
-  limitsBar.append(configBtn);
 
   await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
 }
