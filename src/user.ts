@@ -64,6 +64,10 @@ async function handleDocumentChangesV6() {
   const optionBar = $<HTMLElement>(publishBar, '.opt');
   if (!buttonBar || !optionBar) return;
 
+  const iconsBar = $<HTMLElement>(optionBar, '.ico');
+  const iptBar = $<HTMLElement>(optionBar, '.ipt');
+  if (!iconsBar || !iptBar) return;
+
   const limitsBar = $<HTMLElement>(buttonBar, '.limits');
   const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
   if (!limitsBar || !submit) return;
@@ -74,7 +78,13 @@ async function handleDocumentChangesV6() {
     'float': 'none',
     'display': 'flex',
     'justify-content': 'flex-end',
+    'margin-left': '60px',
   });
+
+  style(iconsBar, {
+    'float': 'left',
+  });
+  publishBar.insertBefore(iconsBar, buttonBar);
 
   const extraBar = insertBefore(publishBar, optionBar, () => style(create('div'), {
     'display': 'flex',
@@ -108,15 +118,18 @@ async function handleDocumentChangesV6() {
     await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
     style(configDiv, { 'display': 'none' });
   });
-  append(limitsBar, () => {
+  insertBefore(optionBar, iptBar, () => {
     const btn = create('a');
     btn.innerHTML = `
       <span class="W_autocut" style="width: auto;">配置转发</span>
-      <i class="W_ficon ficon_set S_ficon_dis" style="margin: 0 0 0 2px; vertical-align: 4px;">*</i>
+      <i class="W_ficon ficon_set S_ficon_dis">*</i>
     `;
     attrs(btn, {
       'class': 'S_txt1',
       'href': 'javascript:void(0)',
+    });
+    style(btn, {
+      'float': 'right',
     });
     on(btn, 'click', async () => {
       configInput.value = await getValue('words', DEFAULT_WORDS);
