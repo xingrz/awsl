@@ -1,6 +1,6 @@
 const { resolve, join } = require('path');
 const { readFileSync } = require('fs');
-const { BannerPlugin, CleanPlugin } = require('webpack');
+const { BannerPlugin } = require('webpack');
 const CreateFilePlugin = require('create-file-webpack');
 
 const pkg = require('./package.json');
@@ -12,7 +12,6 @@ module.exports = {
   mode: 'none',
   entry: './src/main.ts',
   plugins: [
-    new CleanPlugin(),
     new BannerPlugin({ banner: META, raw: true }),
     new CreateFilePlugin({
       path: resolve(__dirname, 'dist'),
@@ -35,5 +34,6 @@ module.exports = {
   output: {
     filename: 'awsl.user.js',
     path: resolve(__dirname, 'dist'),
+    clean: true,
   },
 };
