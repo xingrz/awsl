@@ -23,6 +23,23 @@ AWSL
 
    [![chrome-img]][chrome-url]
 
+## 开发
+
+1. 克隆项目，执行 `npm install` 安装所需开发依赖
+2. 执行 `npm run watch` 开启一个后台编译
+3. 在 Tampermonkey 中通过下列脚本加载本插件：
+
+    ```js
+    // ==UserScript==
+    // @name         AWSL (debug)
+    // @version      debug
+    // @match        https://weibo.com/*
+    // @grant        GM.getValue
+    // @grant        GM.setValue
+    // @require      file:///path/to/xingrz/awsl/dist/awsl.user.js
+    // ==/UserScript==
+    ```
+
 ## 协议
 
 本项目基于 [WTFPL](LICENSE) 许可协议开源。
