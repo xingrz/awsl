@@ -3,10 +3,13 @@ const { readFileSync } = require('fs');
 const { BannerPlugin } = require('webpack');
 const CreateFilePlugin = require('create-file-webpack');
 
-const pkg = require('./package.json');
+const { version } = require('./package.json');
 
-const META = readFileSync(join(__dirname, 'meta.in.js'), 'utf-8')
-  .replace('{{version}}', pkg.version);
+const META = readFileSync(join(__dirname, 'assets', 'meta.in.js'), 'utf-8')
+  .replace('{{version}}', version);
+
+const MANIFEST = readFileSync(join(__dirname, 'assets', 'manifest.in.json'), 'utf-8')
+  .replace('{{version}}', version);
 
 module.exports = {
   mode: 'none',
@@ -17,6 +20,11 @@ module.exports = {
       path: resolve(__dirname, 'dist'),
       fileName: 'awsl.meta.js',
       content: META,
+    }),
+    new CreateFilePlugin({
+      path: resolve(__dirname, 'dist'),
+      fileName: 'manifest.json',
+      content: MANIFEST,
     }),
   ],
   module: {
