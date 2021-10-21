@@ -2,6 +2,7 @@
   "name": "awsl",
   "version": "1.0.0",
   "description": "Auto AWSLing",
+  "private": true,
   "scripts": {
     "dev": "webpack watch --config webpack.config.js",
     "build": "webpack build --config webpack.config.js"
