@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/chrome": "^0.0.159",
     "@types/tampermonkey": "^4.0.5",
+    "create-file-webpack": "^1.0.2",
     "ts-loader": "^9.2.6",
     "typescript": "^4.4.4",
     "webpack": "^5.58.2",
