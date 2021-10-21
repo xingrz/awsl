@@ -1,7 +1,7 @@
 AWSL
 ========
 
-[![version][version-img]][script-url] [![size][size-img]][script-url] [![license][license-img]][license-url] [![issues][issues-img]][issues-url] [![stars][stars-img]][stars-url] [![commits][commits-img]][commits-url]
+[![version][version-img]][script-url] [![license][license-img]][license-url] [![issues][issues-img]][issues-url] [![stars][stars-img]][stars-url] [![commits][commits-img]][commits-url]
 
 给微博增加一键转发功能，支持配置不同的一键转发短语。
 
@@ -28,7 +28,6 @@ AWSL
 本项目基于 [WTFPL](LICENSE) 许可协议开源。
 
 [version-img]: https://img.shields.io/github/v/tag/xingrz/awsl?label=version&sort=semver&style=flat-square
-[size-img]: https://img.shields.io/github/size/xingrz/awsl/awsl.user.js?style=flat-square
 [license-img]: https://img.shields.io/github/license/xingrz/awsl?style=flat-square
 [license-url]: LICENSE
 [issues-img]: https://img.shields.io/github/issues/xingrz/awsl?style=flat-square
