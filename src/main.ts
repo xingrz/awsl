@@ -4,7 +4,7 @@ import { $, $$, on, style, toggle, create, insertBefore, append, attrs } from '.
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
 
-async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, textarea: HTMLInputElement, submit: HTMLElement) {
+async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, textarea: HTMLInputElement, submit: HTMLElement): Promise<void> {
   for (const btn of $$(buttonBar, '.awsl-button')) {
     btn.remove();
   }
@@ -52,7 +52,7 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   }
 }
 
-async function handleDocumentChangesV6() {
+async function handleDocumentChangesV6(): Promise<void> {
   const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
   if (!forwardLayer) return;
 
