@@ -72,7 +72,7 @@ async function handleDocumentChangesV6() {
   const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
   if (!limitsBar || !submit) return;
 
-  forwardLayer.setAttribute('awsl', 'yes');
+  attrs(forwardLayer, { 'awsl': 'yes' });
 
   style(buttonBar, {
     'float': 'none',
