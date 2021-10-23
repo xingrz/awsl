@@ -12,6 +12,8 @@ interface IForwardLayerV6 {
   ico: HTMLElement;
   ipt: HTMLElement;
   submit: HTMLElement;
+  p_input: HTMLElement;
+  num: HTMLElement;
 }
 
 async function recreateButtonsV6(ctx: IForwardLayerV6, extraBar: HTMLElement): Promise<void> {
@@ -114,6 +116,109 @@ function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
   });
 }
 
+function createTruncatorV6(ctx: IForwardLayerV6): void {
+  // 创建选择列表
+  const container = insertBefore(ctx.p_input, ctx.textarea, () => {
+    const div = create('div');
+    style(div, {
+      'display': 'none',
+      'padding': '4px 4px 20px',
+      'border': '1px solid #fa7d3c',
+      'min-height': '54px',
+    });
+    return div;
+  });
+
+  function escapeLinks(value: string): string {
+    return value.replace(/(http|https)\:\/\//g, '$1:$$$$');
+  }
+
+  function unescapeLinks(value: string): string {
+    return value.replace(/(http|https)\:\$\$/g, '$1://');
+  }
+
+  function textToList(): void {
+    html(container, '');
+    for (const raw of escapeLinks(ctx.textarea.value).split('//').slice(1)) {
+      const full = unescapeLinks(raw);
+
+      full.match(/^(([^\:]+)\:)?(.*)$/);
+      const name = RegExp.$2 || '';
+      const text = RegExp.$3 || '';
+
+      append(container, () => {
+        const label = style(create('label'), {
+          'display': 'flex',
+          'padding': '2px 4px',
+          'cursor': 'pointer',
+          'line-height': '1.5',
+        });
+
+        const input = append(label, () => create('input'));
+        style(input, {
+          'margin-top': '2px',
+        });
+        attrs(input, {
+          'class': 'W_checkbox',
+          'type': 'checkbox',
+          'value': full,
+          'checked': 'yes',
+        });
+        on(input, 'change', () => listToText());
+
+        const span = append(label, () => create('span'));
+        html(span, [
+          name ? `<span style="color: #eb7350">${name}</span>: ` : '',
+          (text && text.trim()) ? `<span>${text}</span>` : '<span class="S_txt2">(空)</span>',
+        ].join(''));
+
+        return label;
+      });
+    }
+  }
+
+  function listToText(): void {
+    const values = [''];
+    for (const el of $$(container, 'input[type="checkbox"]')) {
+      const input = el as HTMLInputElement;
+      if (input.checked) values.push(input.value);
+    }
+    ctx.textarea.value = values.join('//');
+    ctx.textarea.dispatchEvent(new Event('focus'));
+  }
+
+  // 在字数右侧加入按钮
+  style(ctx.num, {
+    'right': '30px',
+  });
+  append(ctx.p_input, () => {
+    const edit = create('a');
+    html(edit, `<i class="W_ficon">s</i>`);
+    style(edit, {
+      'bottom': '6px',
+    });
+    attrs(edit, {
+      'class': ['tips', 'S_txt2'].join(' '),
+      'href': 'javascript:void(0)',
+    });
+    on(edit, 'click', () => {
+      if (container.style.display == 'none') {
+        if (ctx.textarea.value.split('//').length > 2) {
+          textToList();
+          style(ctx.textarea, { 'display': 'none' });
+          style(container, { 'display': 'block' });
+        }
+      } else {
+        style(container, { 'display': 'none' });
+        style(ctx.textarea, { 'display': 'block' });
+        ctx.textarea.setSelectionRange(0, 0);
+        ctx.textarea.focus();
+      }
+    });
+    return edit;
+  });
+}
+
 async function handleDocumentChangesV6(): Promise<void> {
   const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
   if (!forwardLayer) return;
@@ -126,6 +231,8 @@ async function handleDocumentChangesV6(): Promise<void> {
     ico: '[node-type="widget"] .ico',
     ipt: '[node-type="cmtopts"]',
     submit: '[node-type="submit"]',
+    p_input: '.p_input',
+    num: '[node-type="num"]',
   });
   if (!ctx) return;
 
@@ -159,6 +266,9 @@ async function handleDocumentChangesV6(): Promise<void> {
 
   // 填充转发词
   await recreateButtonsV6(ctx, extraBar);
+
+  // 创建转发截断控件
+  createTruncatorV6(ctx);
 }
 
 const observer = new MutationObserver(() => {

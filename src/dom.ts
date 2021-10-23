@@ -53,9 +53,14 @@ export function append(parent: ParentNode, creator: () => HTMLElement): HTMLElem
   return element;
 }
 
-export function attrs(element: HTMLElement, attrs: Record<string, string>): HTMLElement {
+export function attrs(element: HTMLElement, attrs: Record<string, string | null>): HTMLElement {
   for (const key in attrs) {
-    element.setAttribute(key, attrs[key]);
+    const value = attrs[key];
+    if (value == null) {
+      element.removeAttribute(key);
+    } else {
+      element.setAttribute(key, value);
+    }
   }
   return element;
 }
