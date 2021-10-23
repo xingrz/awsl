@@ -116,9 +116,8 @@ async function handleDocumentChangesV6(): Promise<void> {
   const iptBar = $<HTMLElement>(optionBar, '.ipt');
   if (!iconsBar || !iptBar) return;
 
-  const limitsBar = $<HTMLElement>(buttonBar, '.limits');
   const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
-  if (!limitsBar || !submit) return;
+  if (!submit) return;
 
   // 标记为已改造
   attrs(forwardLayer, { 'awsl': 'yes' });
