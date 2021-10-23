@@ -52,47 +52,7 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   }
 }
 
-async function handleDocumentChangesV6(): Promise<void> {
-  const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
-  if (!forwardLayer) return;
-
-  const textarea = $<HTMLInputElement>(forwardLayer, '.WB_publish textarea.W_input');
-  const publishBar = $<HTMLElement>(forwardLayer, '.WB_publish .p_opt');
-  if (!textarea || !publishBar) return;
-
-  const buttonBar = $<HTMLElement>(publishBar, '.btn.W_fr');
-  const optionBar = $<HTMLElement>(publishBar, '.opt');
-  if (!buttonBar || !optionBar) return;
-
-  const iconsBar = $<HTMLElement>(optionBar, '.ico');
-  const iptBar = $<HTMLElement>(optionBar, '.ipt');
-  if (!iconsBar || !iptBar) return;
-
-  const limitsBar = $<HTMLElement>(buttonBar, '.limits');
-  const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
-  if (!limitsBar || !submit) return;
-
-  attrs(forwardLayer, { 'awsl': 'yes' });
-
-  style(buttonBar, {
-    'float': 'none',
-    'display': 'flex',
-    'justify-content': 'flex-end',
-    'margin-left': '60px',
-  });
-
-  style(iconsBar, {
-    'float': 'left',
-  });
-  publishBar.insertBefore(iconsBar, buttonBar);
-
-  const extraBar = insertBefore(publishBar, optionBar, () => style(create('div'), {
-    'display': 'flex',
-    'flex-wrap': 'wrap',
-    'justify-content': 'flex-end',
-    'gap': '8px',
-  }));
-
+function createConfigV6(publishBar: HTMLElement, optionBar: HTMLElement, iptBar: HTMLElement, onSave: () => void): void {
   const configDiv = insertBefore(publishBar, optionBar, () => {
     const div = create('div');
     style(div, {
@@ -115,8 +75,8 @@ async function handleDocumentChangesV6(): Promise<void> {
   const configInput = $<HTMLInputElement>(configDiv, '.awsl-config-input')!;
   on($<HTMLElement>(configDiv, '.awsl-config-save')!, 'click', async () => {
     await setValue('words', configInput.value);
-    await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
     style(configDiv, { 'display': 'none' });
+    onSave();
   });
   insertBefore(optionBar, iptBar, () => {
     const btn = create('a');
@@ -138,7 +98,57 @@ async function handleDocumentChangesV6(): Promise<void> {
     });
     return btn;
   });
+}
 
+async function handleDocumentChangesV6(): Promise<void> {
+  const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
+  if (!forwardLayer) return;
+
+  const textarea = $<HTMLInputElement>(forwardLayer, '.WB_publish textarea.W_input');
+  const publishBar = $<HTMLElement>(forwardLayer, '.WB_publish .p_opt');
+  if (!textarea || !publishBar) return;
+
+  const buttonBar = $<HTMLElement>(publishBar, '.btn.W_fr');
+  const optionBar = $<HTMLElement>(publishBar, '.opt');
+  if (!buttonBar || !optionBar) return;
+
+  const iconsBar = $<HTMLElement>(optionBar, '.ico');
+  const iptBar = $<HTMLElement>(optionBar, '.ipt');
+  if (!iconsBar || !iptBar) return;
+
+  const limitsBar = $<HTMLElement>(buttonBar, '.limits');
+  const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
+  if (!limitsBar || !submit) return;
+
+  // 标记为已改造
+  attrs(forwardLayer, { 'awsl': 'yes' });
+
+  // 调整转发按钮和表情按钮的浮动关系
+  style(buttonBar, {
+    'float': 'none',
+    'display': 'flex',
+    'justify-content': 'flex-end',
+    'margin-left': '60px',
+  });
+  style(iconsBar, {
+    'float': 'left',
+  });
+  publishBar.insertBefore(iconsBar, buttonBar);
+
+  // 新增一块区域用于超过3个的转发词
+  const extraBar = insertBefore(publishBar, optionBar, () => style(create('div'), {
+    'display': 'flex',
+    'flex-wrap': 'wrap',
+    'justify-content': 'flex-end',
+    'gap': '8px',
+  }));
+
+  // 创建配置区
+  createConfigV6(publishBar, optionBar, iptBar, async () => {
+    await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
+  });
+
+  // 填充转发词
   await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
 }
 
