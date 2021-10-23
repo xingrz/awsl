@@ -1,11 +1,21 @@
 import { getValue, setValue } from './kv';
-import { $, $$, on, style, toggle, create, insertBefore, append, attrs } from './dom';
+import { $, $H, $$, on, style, toggle, create, insertBefore, append, attrs } from './dom';
 
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
 
-async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, textarea: HTMLInputElement, submit: HTMLElement): Promise<void> {
-  for (const btn of $$(buttonBar, '.awsl-button')) {
+interface IForwardLayerV6 {
+  textarea: HTMLInputElement;
+  p_opt: HTMLElement;
+  btn: HTMLElement;
+  opt: HTMLElement;
+  ico: HTMLElement;
+  ipt: HTMLElement;
+  submit: HTMLElement;
+}
+
+async function recreateButtonsV6(ctx: IForwardLayerV6, extraBar: HTMLElement): Promise<void> {
+  for (const btn of $$(ctx.btn, '.awsl-button')) {
     btn.remove();
   }
   extraBar.innerHTML = '';
@@ -22,11 +32,11 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
       'href': 'javascript:void(0)',
     });
     on(button, 'click', () => {
-      if (textarea.value == '请输入转发理由') {
-        textarea.value = '';
+      if (ctx.textarea.value == '请输入转发理由') {
+        ctx.textarea.value = '';
       }
-      textarea.value = word + textarea.value;
-      submit.click();
+      ctx.textarea.value = word + ctx.textarea.value;
+      ctx.submit.click();
       for (const btn of buttons) {
         btn.classList.add('W_btn_b_disable');
       }
@@ -36,7 +46,7 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   }
 
   for (const word of words.slice(0, MAX_WORDS)) {
-    insertBefore(buttonBar, submit, () => style(createButton(word), {
+    insertBefore(ctx.btn, ctx.submit, () => style(createButton(word), {
       'vertical-align': 'top',
       'margin-right': '8px',
       'max-width': '50px',
@@ -52,8 +62,8 @@ async function recreateButtonsV6(buttonBar: HTMLElement, extraBar: HTMLElement, 
   }
 }
 
-function createConfigV6(publishBar: HTMLElement, optionBar: HTMLElement, iptBar: HTMLElement, onSave: () => void): void {
-  const configDiv = insertBefore(publishBar, optionBar, () => {
+function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
+  const container = insertBefore(ctx.p_opt, ctx.opt, () => {
     const div = create('div');
     style(div, {
       'display': 'none',
@@ -72,13 +82,17 @@ function createConfigV6(publishBar: HTMLElement, optionBar: HTMLElement, iptBar:
     return div;
   });
 
-  const configInput = $<HTMLInputElement>(configDiv, '.awsl-config-input')!;
-  on($<HTMLElement>(configDiv, '.awsl-config-save')!, 'click', async () => {
-    await setValue('words', configInput.value);
-    style(configDiv, { 'display': 'none' });
+  const config = $H<{ input: HTMLInputElement, save: HTMLElement }>(container, {
+    input: '.awsl-config-input',
+    save: '.awsl-config-save',
+  })!;
+
+  on(config.save, 'click', async () => {
+    await setValue('words', config.input.value);
+    style(container, { 'display': 'none' });
     onSave();
   });
-  insertBefore(optionBar, iptBar, () => {
+  insertBefore(ctx.opt, ctx.ipt, () => {
     const btn = create('a');
     btn.innerHTML = `
       <span class="W_autocut" style="width: auto;">配置转发</span>
@@ -92,9 +106,9 @@ function createConfigV6(publishBar: HTMLElement, optionBar: HTMLElement, iptBar:
       'float': 'right',
     });
     on(btn, 'click', async () => {
-      configInput.value = await getValue('words', DEFAULT_WORDS);
-      toggle(configDiv, 'display', 'none', 'block');
-      configInput.focus();
+      config.input.value = await getValue('words', DEFAULT_WORDS);
+      toggle(container, 'display', 'none', 'block');
+      config.input.focus();
     });
     return btn;
   });
@@ -104,38 +118,34 @@ async function handleDocumentChangesV6(): Promise<void> {
   const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
   if (!forwardLayer) return;
 
-  const textarea = $<HTMLInputElement>(forwardLayer, '.WB_publish textarea.W_input');
-  const publishBar = $<HTMLElement>(forwardLayer, '.WB_publish .p_opt');
-  if (!textarea || !publishBar) return;
-
-  const buttonBar = $<HTMLElement>(publishBar, '.btn.W_fr');
-  const optionBar = $<HTMLElement>(publishBar, '.opt');
-  if (!buttonBar || !optionBar) return;
-
-  const iconsBar = $<HTMLElement>(optionBar, '.ico');
-  const iptBar = $<HTMLElement>(optionBar, '.ipt');
-  if (!iconsBar || !iptBar) return;
-
-  const submit = $<HTMLElement>(buttonBar, '.W_btn_a[node-type="submit"]');
-  if (!submit) return;
+  const ctx = $H<IForwardLayerV6>(forwardLayer, {
+    textarea: '[node-type="textEl"]',
+    p_opt: '.p_opt',
+    btn: '.p_opt .btn.W_fr',
+    opt: '[node-type="widget"]',
+    ico: '[node-type="widget"] .ico',
+    ipt: '[node-type="cmtopts"]',
+    submit: '[node-type="submit"]',
+  });
+  if (!ctx) return;
 
   // 标记为已改造
   attrs(forwardLayer, { 'awsl': 'yes' });
 
   // 调整转发按钮和表情按钮的浮动关系
-  style(buttonBar, {
+  style(ctx.btn, {
     'float': 'none',
     'display': 'flex',
     'justify-content': 'flex-end',
     'margin-left': '60px',
   });
-  style(iconsBar, {
+  style(ctx.ico, {
     'float': 'left',
   });
-  publishBar.insertBefore(iconsBar, buttonBar);
+  ctx.p_opt.insertBefore(ctx.ico, ctx.btn);
 
   // 新增一块区域用于超过3个的转发词
-  const extraBar = insertBefore(publishBar, optionBar, () => style(create('div'), {
+  const extraBar = insertBefore(ctx.p_opt, ctx.opt, () => style(create('div'), {
     'display': 'flex',
     'flex-wrap': 'wrap',
     'justify-content': 'flex-end',
@@ -143,12 +153,12 @@ async function handleDocumentChangesV6(): Promise<void> {
   }));
 
   // 创建配置区
-  createConfigV6(publishBar, optionBar, iptBar, async () => {
-    await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
+  createConfigV6(ctx, async () => {
+    await recreateButtonsV6(ctx, extraBar);
   });
 
   // 填充转发词
-  await recreateButtonsV6(buttonBar, extraBar, textarea, submit);
+  await recreateButtonsV6(ctx, extraBar);
 }
 
 const observer = new MutationObserver(() => {

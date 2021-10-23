@@ -6,6 +6,16 @@ export function $$(parent: ParentNode, selecor: string): NodeListOf<Element> {
   return parent.querySelectorAll(selecor);
 }
 
+export function $H<T = Record<string, HTMLElement>>(parent: ParentNode, selectors: Record<keyof T, string>): T | null {
+  const elements: Record<string, HTMLElement> = {};
+  for (const key in selectors) {
+    const el = $<HTMLElement>(parent, selectors[key]);
+    if (el == null) return null;
+    elements[key] = el;
+  }
+  return elements as unknown as T;
+}
+
 export function on<K extends keyof HTMLElementEventMap>(
   element: HTMLElement,
   type: K,
