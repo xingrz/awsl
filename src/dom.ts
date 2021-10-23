@@ -59,3 +59,8 @@ export function attrs(element: HTMLElement, attrs: Record<string, string>): HTML
   }
   return element;
 }
+
+export function html(element: HTMLElement, html: string): HTMLElement {
+  element.innerHTML = html;
+  return element;
+}

@@ -1,5 +1,5 @@
 import { getValue, setValue } from './kv';
-import { $, $H, $$, on, style, toggle, create, insertBefore, append, attrs } from './dom';
+import { $, $H, $$, on, style, toggle, create, insertBefore, append, attrs, html } from './dom';
 
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
@@ -18,14 +18,14 @@ async function recreateButtonsV6(ctx: IForwardLayerV6, extraBar: HTMLElement): P
   for (const btn of $$(ctx.btn, '.awsl-button')) {
     btn.remove();
   }
-  extraBar.innerHTML = '';
+  html(extraBar, '');
 
   const buttons: HTMLElement[] = [];
   const words = (await getValue('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
 
   function createButton(word: string): HTMLElement {
     const button = create('a');
-    button.innerHTML = word;
+    html(button, word);
     attrs(button, {
       'class': ['awsl-button', 'W_btn_b'].join(' '),
       'title': word,
@@ -70,7 +70,7 @@ function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
       'margin-bottom': '16px',
       'text-align': 'left',
     });
-    div.innerHTML = `
+    html(div, `
       <div style="margin-bottom: 2px">转发词组（以分号 ";" 间隔）：</div>
       <div style="display: flex;">
         <input class="awsl-config-input W_input" style="flex: 1;" />
@@ -78,7 +78,7 @@ function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
           保存
         </a>
       </div>
-    `;
+    `);
     return div;
   });
 
@@ -94,10 +94,10 @@ function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
   });
   insertBefore(ctx.opt, ctx.ipt, () => {
     const btn = create('a');
-    btn.innerHTML = `
+    html(btn, `
       <span class="W_autocut" style="width: auto;">配置转发</span>
       <i class="W_ficon ficon_set S_ficon_dis">*</i>
-    `;
+    `);
     attrs(btn, {
       'class': 'S_txt1',
       'href': 'javascript:void(0)',
