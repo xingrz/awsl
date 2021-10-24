@@ -137,9 +137,13 @@ function createTruncatorV6(ctx: IForwardLayerV6): void {
     return value.replace(/(http|https)\:\$\$/g, '$1://');
   }
 
+  let current = '';
+
   function textToList(): void {
     html(container, '');
-    for (const raw of escapeLinks(ctx.textarea.value).split('//').slice(1)) {
+    const [first, ...others] = escapeLinks(ctx.textarea.value).split('//');
+    current = first;
+    for (const raw of others) {
       const full = unescapeLinks(raw);
 
       full.match(/^(([^\:]+)\:)?(.*)$/);
@@ -178,7 +182,7 @@ function createTruncatorV6(ctx: IForwardLayerV6): void {
   }
 
   function listToText(): void {
-    const values = [''];
+    const values = [current];
     for (const el of $$(container, 'input[type="checkbox"]')) {
       const input = el as HTMLInputElement;
       if (input.checked) values.push(input.value);
