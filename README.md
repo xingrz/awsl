@@ -26,7 +26,7 @@ AWSL
 ## 开发
 
 1. 克隆项目，执行 `npm install` 安装所需开发依赖
-2. 执行 `npm run watch` 开启一个后台编译
+2. 执行 `npm run dev` 开启一个后台编译
 3. 在 Tampermonkey 中通过下列脚本加载本插件：
 
     ```js
