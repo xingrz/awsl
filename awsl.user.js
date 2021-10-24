@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      1.1.1
+// @version      1.1.2
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -309,9 +309,12 @@ function createTruncatorV6(ctx) {
     function unescapeLinks(value) {
         return value.replace(/(http|https)\:\$\$/g, '$1://');
     }
+    let current = '';
     function textToList() {
         (0,_dom__WEBPACK_IMPORTED_MODULE_1__.html)(container, '');
-        for (const raw of escapeLinks(ctx.textarea.value).split('//').slice(1)) {
+        const [first, ...others] = escapeLinks(ctx.textarea.value).split('//');
+        current = first;
+        for (const raw of others) {
             const full = unescapeLinks(raw);
             full.match(/^(([^\:]+)\:)?(.*)$/);
             const name = RegExp.$2 || '';
@@ -344,7 +347,7 @@ function createTruncatorV6(ctx) {
         }
     }
     function listToText() {
-        const values = [''];
+        const values = [current];
         for (const el of (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(container, 'input[type="checkbox"]')) {
             const input = el;
             if (input.checked)
