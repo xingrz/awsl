@@ -15,6 +15,7 @@ module.exports = {
   mode: 'none',
   entry: [
     './src/v6.ts',
+    './src/v7.ts',
   ],
   plugins: [
     new BannerPlugin({ banner: META, raw: true }),
