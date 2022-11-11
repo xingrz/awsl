@@ -4,7 +4,7 @@ import { $, $H, $$, on, style, toggle, create, insertBefore, append, attrs, html
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
 
-interface IForwardLayerV6 {
+interface IForwardLayer {
   textarea: HTMLInputElement;
   p_opt: HTMLElement;
   btn: HTMLElement;
@@ -16,7 +16,7 @@ interface IForwardLayerV6 {
   num: HTMLElement;
 }
 
-async function recreateButtonsV6(ctx: IForwardLayerV6, extraBar: HTMLElement): Promise<void> {
+async function recreateButtons(ctx: IForwardLayer, extraBar: HTMLElement): Promise<void> {
   for (const btn of $$(ctx.btn, '.awsl-button')) {
     btn.remove();
   }
@@ -64,7 +64,7 @@ async function recreateButtonsV6(ctx: IForwardLayerV6, extraBar: HTMLElement): P
   }
 }
 
-function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
+function createConfig(ctx: IForwardLayer, onSave: () => void): void {
   const container = insertBefore(ctx.p_opt, ctx.opt, () => {
     const div = create('div');
     style(div, {
@@ -116,7 +116,7 @@ function createConfigV6(ctx: IForwardLayerV6, onSave: () => void): void {
   });
 }
 
-function createTruncatorV6(ctx: IForwardLayerV6): void {
+function createTruncator(ctx: IForwardLayer): void {
   // 创建选择列表
   const container = insertBefore(ctx.p_input, ctx.textarea, () => {
     const div = create('div');
@@ -223,11 +223,11 @@ function createTruncatorV6(ctx: IForwardLayerV6): void {
   });
 }
 
-async function handleDocumentChangesV6(): Promise<void> {
+async function handleDocumentChanges(): Promise<void> {
   const forwardLayer = $<HTMLElement>(document, '.layer_forward:not([awsl="yes"])');
   if (!forwardLayer) return;
 
-  const ctx = $H<IForwardLayerV6>(forwardLayer, {
+  const ctx = $H<IForwardLayer>(forwardLayer, {
     textarea: '[node-type="textEl"]',
     p_opt: '.p_opt',
     btn: '.p_opt .btn.W_fr',
@@ -264,18 +264,18 @@ async function handleDocumentChangesV6(): Promise<void> {
   }));
 
   // 创建配置区
-  createConfigV6(ctx, async () => {
-    await recreateButtonsV6(ctx, extraBar);
+  createConfig(ctx, async () => {
+    await recreateButtons(ctx, extraBar);
   });
 
   // 填充转发词
-  await recreateButtonsV6(ctx, extraBar);
+  await recreateButtons(ctx, extraBar);
 
   // 创建转发截断控件
-  createTruncatorV6(ctx);
+  createTruncator(ctx);
 }
 
 const observer = new MutationObserver(() => {
-  handleDocumentChangesV6();
+  handleDocumentChanges();
 });
 observer.observe(document.body, { childList: true, subtree: true });

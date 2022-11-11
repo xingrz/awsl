@@ -13,7 +13,9 @@ const MANIFEST = readFileSync(join(__dirname, 'assets', 'manifest.in.json'), 'ut
 
 module.exports = {
   mode: 'none',
-  entry: './src/main.ts',
+  entry: [
+    './src/v6.ts',
+  ],
   plugins: [
     new BannerPlugin({ banner: META, raw: true }),
     new CreateFilePlugin({
