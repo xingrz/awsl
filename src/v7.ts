@@ -1,10 +1,11 @@
 import { getValue } from './kv';
-import { $H, $$, on, style, create, append, attrs, html, $, attr, insertBefore } from './dom';
+import { $H, $$, on, style, create, append, attrs, html, $ } from './dom';
 
 const DEFAULT_WORDS = '草;awsl';
 
 new MutationObserver(() => {
   adjustSubmit();
+  adjustRouter();
   adjustNavItems();
   removeAds();
 }).observe(document.body, { childList: true, subtree: true });
@@ -81,34 +82,89 @@ function createButton(text: string): HTMLElement {
   return button;
 }
 
-function adjustNavItems(): void {
-  const logo = $(document, '.Nav_logoWrap_2fPbO:not([awsl="yes"])');
-  if (!logo) return;
+interface VueHTMLElement extends HTMLElement {
+  __vue__?: IVue;
+}
 
-  const navPanel = $(document, '.Nav_inner_1QCVO:not([awsl="yes"])');
-  if (!navPanel) return;
+interface IVue {
+  config?: {
+    uid?: number;
+  };
+  _router?: {
+    beforeEach(hook: (
+      to: IRoute,
+      from: IRoute,
+      next: (next?: false | string | IRoute) => void
+    ) => void): void;
+  };
+}
 
-  const navLinks = $$(navPanel, '.ALink_none_1w6rm');
-  if (!navLinks.length) return;
+interface IRoute {
+  name: string;
+  path?: string;
+  query?: Record<string, string>;
+  fullPath?: string;
+}
 
-  attrs(navPanel, { 'awsl': 'yes' });
+function adjustRouter(): void {
+  const app = $<VueHTMLElement>(document, '#app:not([awsl="yes"])');
+  if (!app) return;
 
-  const navAll = navLinks[0] as HTMLElement;
-  const navLatest = navLinks[1] as HTMLElement;
+  const vue = app.__vue__;
+  if (!vue) return;
 
-  style(navAll, { 'display': 'none' });
+  const uid = vue.config?.uid;
+  if (!uid) return;
 
-  insertBefore(logo.parentElement!, logo, () => {
-    const newLogo = create('a');
-    attrs(newLogo, {
-      'class': 'Nav_logoWrap_2fPbO',
-      'href': attr(navLatest, 'href'),
-      'awsl': 'yes',
-    });
-    html(newLogo, logo.innerHTML);
-    return newLogo;
+  const router = vue._router;
+  if (!router) return;
+
+  attrs(app, { 'awsl': 'yes' });
+
+  router.beforeEach((to, _from, next) => {
+    if (to.name == 'home') {
+      next({
+        name: 'mygroups',
+        query: {
+          gid: `11000${uid}`,
+        },
+      });
+    } else {
+      next();
+    }
   });
-  logo.remove();
+}
+
+interface INavContext {
+  app: VueHTMLElement;
+  logo: HTMLElement;
+  tabHome: HTMLElement;
+}
+
+function adjustNavItems(): void {
+  const navAll = $(document, '.Nav_inner_1QCVO a.ALink_none_1w6rm[href="/"]:not([awsl="yes"])');
+  if (navAll) {
+    style(navAll, { 'display': 'none' });
+    attrs(navAll, { 'awsl': 'yes' });
+  }
+
+  const ctx = $H<INavContext>(document, {
+    app: '#app',
+    logo: '.Nav_logoWrap_2fPbO[href="/"]',
+    tabHome: '.woo-tab-nav a.Ctrls_alink_1L3hP[href="/"]',
+  });
+  if (!ctx) return;
+
+  const uid = ctx.app.__vue__?.config?.uid;
+  if (!uid) return;
+
+  attrs(ctx.logo, {
+    'href': `/mygroups?gid=11000${uid}`,
+  });
+
+  attrs(ctx.tabHome, {
+    'href': `/mygroups?gid=11000${uid}`,
+  });
 }
 
 function removeAds(): void {
