@@ -67,6 +67,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "insertBefore": () => (/* binding */ insertBefore),
 /* harmony export */   "append": () => (/* binding */ append),
 /* harmony export */   "attrs": () => (/* binding */ attrs),
+/* harmony export */   "attr": () => (/* binding */ attr),
 /* harmony export */   "html": () => (/* binding */ html)
 /* harmony export */ });
 function $(parent, selecor) {
@@ -124,6 +125,9 @@ function attrs(element, attrs) {
         }
     }
     return element;
+}
+function attr(element, name) {
+    return element.getAttribute(name);
 }
 function html(element, html) {
     element.innerHTML = html;
@@ -189,8 +193,9 @@ function html(element, html) {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry need to be wrapped in an IIFE because it need to be isolated against other entry modules.
 (() => {
+var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _kv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
@@ -198,7 +203,7 @@ __webpack_require__.r(__webpack_exports__);
 
 const DEFAULT_WORDS = '草;awsl';
 const MAX_WORDS = 3;
-async function recreateButtonsV6(ctx, extraBar) {
+async function recreateButtons(ctx, extraBar) {
     for (const btn of (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(ctx.btn, '.awsl-button')) {
         btn.remove();
     }
@@ -242,7 +247,7 @@ async function recreateButtonsV6(ctx, extraBar) {
         (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(extraBar, { 'margin-bottom': '16px' });
     }
 }
-function createConfigV6(ctx, onSave) {
+function createConfig(ctx, onSave) {
     const container = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.insertBefore)(ctx.p_opt, ctx.opt, () => {
         const div = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div');
         (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(div, {
@@ -291,7 +296,7 @@ function createConfigV6(ctx, onSave) {
         return btn;
     });
 }
-function createTruncatorV6(ctx) {
+function createTruncator(ctx) {
     // 创建选择列表
     const container = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.insertBefore)(ctx.p_input, ctx.textarea, () => {
         const div = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div');
@@ -388,7 +393,7 @@ function createTruncatorV6(ctx) {
         return edit;
     });
 }
-async function handleDocumentChangesV6() {
+async function handleDocumentChanges() {
     const forwardLayer = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.layer_forward:not([awsl="yes"])');
     if (!forwardLayer)
         return;
@@ -426,18 +431,124 @@ async function handleDocumentChangesV6() {
         'gap': '8px',
     }));
     // 创建配置区
-    createConfigV6(ctx, async () => {
-        await recreateButtonsV6(ctx, extraBar);
+    createConfig(ctx, async () => {
+        await recreateButtons(ctx, extraBar);
     });
     // 填充转发词
-    await recreateButtonsV6(ctx, extraBar);
+    await recreateButtons(ctx, extraBar);
     // 创建转发截断控件
-    createTruncatorV6(ctx);
+    createTruncator(ctx);
 }
 const observer = new MutationObserver(() => {
-    handleDocumentChangesV6();
+    handleDocumentChanges();
 });
 observer.observe(document.body, { childList: true, subtree: true });
+
+})();
+
+// This entry need to be wrapped in an IIFE because it need to be isolated against other entry modules.
+(() => {
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _kv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
+/* harmony import */ var _dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
+
+
+const DEFAULT_WORDS = '草;awsl';
+new MutationObserver(() => {
+    adjustSubmit();
+    adjustNavItems();
+    removeAds();
+}).observe(document.body, { childList: true, subtree: true });
+async function adjustSubmit() {
+    const composers = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(document, '.Composer_mar1_ujs0j:not([awsl="yes"])');
+    if (!composers.length)
+        return;
+    const words = (await (0,_kv__WEBPACK_IMPORTED_MODULE_0__.getValue)('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
+    for (const composer of composers) {
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(composer, { 'awsl': 'yes' });
+        injectButtons(composer.parentElement, words);
+    }
+}
+function injectButtons(container, words) {
+    const ctx = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$H)(container, {
+        textarea: '.Form_input_3JT2Q',
+        submit: '.Composer_btn_2XFOD',
+        composer: '.Composer_mar1_ujs0j',
+    });
+    if (!ctx)
+        return;
+    const buttons = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.append)(ctx.composer, () => (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div'));
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(buttons, {
+        'display': 'flex',
+        'flex-wrap': 'wrap',
+        'justify-content': 'flex-end',
+        'gap': '4px 8px',
+        'margin-top': '4px',
+    });
+    for (const word of words) {
+        const button = createButton(word);
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.on)(button, 'click', () => {
+            ctx.textarea.value = word + ctx.textarea.value;
+            ctx.textarea.dispatchEvent(new Event('input'));
+            setTimeout(() => {
+                ctx.submit.click();
+            }, 200);
+        });
+        buttons.appendChild(button);
+    }
+}
+function createButton(text) {
+    const content = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span');
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.html)(content, text);
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(content, { 'class': 'woo-button-content' });
+    const wrap = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span');
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(wrap, { 'class': 'woo-button-wrap' });
+    const button = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('button');
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(button, {
+        'class': [
+            'woo-button-main',
+            'woo-button-flat',
+            'woo-button-default',
+            'woo-button-m',
+            'woo-button-round',
+        ].join(' '),
+    });
+    button.appendChild(wrap);
+    wrap.appendChild(content);
+    return button;
+}
+function adjustNavItems() {
+    const logo = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.Nav_logoWrap_2fPbO:not([awsl="yes"])');
+    if (!logo)
+        return;
+    const navPanel = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.Nav_inner_1QCVO:not([awsl="yes"])');
+    if (!navPanel)
+        return;
+    const navLinks = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(navPanel, '.ALink_none_1w6rm');
+    if (!navLinks.length)
+        return;
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(navPanel, { 'awsl': 'yes' });
+    const navAll = navLinks[0];
+    const navLatest = navLinks[1];
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(navAll, { 'display': 'none' });
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.insertBefore)(logo.parentElement, logo, () => {
+        const newLogo = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('a');
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(newLogo, {
+            'class': 'Nav_logoWrap_2fPbO',
+            'href': (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attr)(navLatest, 'href'),
+            'awsl': 'yes',
+        });
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.html)(newLogo, logo.innerHTML);
+        return newLogo;
+    });
+    logo.remove();
+}
+function removeAds() {
+    const ads = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(document, '.TipsAd_wrap_3QB_0');
+    for (const ad of ads) {
+        ad.remove();
+    }
+}
 
 })();
 
