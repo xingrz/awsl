@@ -65,6 +65,10 @@ export function attrs(element: HTMLElement, attrs: Record<string, string | null>
   return element;
 }
 
+export function attr(element: HTMLElement, name: string): string | null {
+  return element.getAttribute(name);
+}
+
 export function html(element: HTMLElement, html: string): HTMLElement {
   element.innerHTML = html;
   return element;
