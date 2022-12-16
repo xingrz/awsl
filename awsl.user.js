@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.0.0
+// @version      2.0.1
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -456,6 +456,7 @@ __webpack_require__.r(__webpack_exports__);
 const DEFAULT_WORDS = '草;awsl';
 new MutationObserver(() => {
     adjustSubmit();
+    adjustRouter();
     adjustNavItems();
     removeAds();
 }).observe(document.body, { childList: true, subtree: true });
@@ -517,31 +518,56 @@ function createButton(text) {
     wrap.appendChild(content);
     return button;
 }
-function adjustNavItems() {
-    const logo = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.Nav_logoWrap_2fPbO:not([awsl="yes"])');
-    if (!logo)
+function adjustRouter() {
+    const app = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '#app:not([awsl="yes"])');
+    if (!app)
         return;
-    const navPanel = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.Nav_inner_1QCVO:not([awsl="yes"])');
-    if (!navPanel)
+    const vue = app.__vue__;
+    if (!vue)
         return;
-    const navLinks = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(navPanel, '.ALink_none_1w6rm');
-    if (!navLinks.length)
+    const uid = vue.config?.uid;
+    if (!uid)
         return;
-    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(navPanel, { 'awsl': 'yes' });
-    const navAll = navLinks[0];
-    const navLatest = navLinks[1];
-    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(navAll, { 'display': 'none' });
-    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.insertBefore)(logo.parentElement, logo, () => {
-        const newLogo = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.create)('a');
-        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(newLogo, {
-            'class': 'Nav_logoWrap_2fPbO',
-            'href': (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attr)(navLatest, 'href'),
-            'awsl': 'yes',
-        });
-        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.html)(newLogo, logo.innerHTML);
-        return newLogo;
+    const router = vue._router;
+    if (!router)
+        return;
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(app, { 'awsl': 'yes' });
+    router.beforeEach((to, _from, next) => {
+        if (to.name == 'home') {
+            next({
+                name: 'mygroups',
+                query: {
+                    gid: `11000${uid}`,
+                },
+            });
+        }
+        else {
+            next();
+        }
     });
-    logo.remove();
+}
+function adjustNavItems() {
+    const navAll = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$)(document, '.Nav_inner_1QCVO a.ALink_none_1w6rm[href="/"]:not([awsl="yes"])');
+    if (navAll) {
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.style)(navAll, { 'display': 'none' });
+        (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(navAll, { 'awsl': 'yes' });
+    }
+    const ctx = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$H)(document, {
+        app: '#app',
+        logo: '.Nav_logoWrap_2fPbO[href="/"]',
+        tabHome: '.woo-tab-nav a.Ctrls_alink_1L3hP[href="/"]',
+    });
+    if (!ctx)
+        return;
+    const uid = ctx.app.__vue__?.config?.uid;
+    if (!uid)
+        return;
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(ctx.logo, {
+        'href': `/mygroups?gid=11000${uid}`,
+    });
+    (0,_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(ctx.tabHome, {
+        'href': `/mygroups?gid=11000${uid}`,
+    });
 }
 function removeAds() {
     const ads = (0,_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(document, '.TipsAd_wrap_3QB_0');
