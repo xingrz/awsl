@@ -82,14 +82,11 @@ function createButton(text: string): HTMLElement {
   return button;
 }
 
-interface VueHTMLElement extends HTMLElement {
-  __vue__?: IVue;
+interface VueHTMLElement<T> extends HTMLElement {
+  __vue__?: IVue & T;
 }
 
 interface IVue {
-  config?: {
-    uid?: number;
-  };
   _router?: {
     beforeEach(hook: (
       to: IRoute,
@@ -106,8 +103,14 @@ interface IRoute {
   fullPath?: string;
 }
 
+interface IApp {
+  config?: {
+    uid: number;
+  }
+}
+
 function adjustRouter(): void {
-  const app = $<VueHTMLElement>(document, '#app:not([awsl="yes"])');
+  const app = $<VueHTMLElement<IApp>>(document, '#app:not([awsl="yes"])');
   if (!app) return;
 
   const vue = app.__vue__;
@@ -136,7 +139,7 @@ function adjustRouter(): void {
 }
 
 interface INavContext {
-  app: VueHTMLElement;
+  app: VueHTMLElement<IApp>;
   logo: HTMLElement;
   tabHome: HTMLElement;
 }
