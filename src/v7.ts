@@ -25,7 +25,7 @@ interface IComposeBar {
   composer: HTMLElement;
 }
 
-async function injectButtons(container: HTMLElement, words: string[]): Promise<void> {
+function injectButtons(container: HTMLElement, words: string[]): void {
   const ctx = $H<IComposeBar>(container, {
     textarea: '.Form_input_3JT2Q',
     submit: '.Composer_btn_2XFOD',
