@@ -73,3 +73,9 @@ export function html(element: HTMLElement, html: string): HTMLElement {
   element.innerHTML = html;
   return element;
 }
+
+export function observe(element: HTMLElement, callback: MutationCallback): MutationObserver {
+  const observer = new MutationObserver(callback);
+  observer.observe(element, { childList: true, subtree: true });
+  return observer;
+}
