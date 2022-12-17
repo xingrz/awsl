@@ -1,5 +1,5 @@
 import { getValue } from '../utils/kv';
-import { $H, $$, on, style, create, append, attrs, html, observe } from '../utils/dom';
+import { $H, $$, on, create, append, attrs, observe } from '../utils/dom';
 
 const DEFAULT_WORDS = '草;awsl';
 
@@ -29,17 +29,18 @@ function injectButtons(container: HTMLElement, words: string[]): void {
   });
   if (!ctx) return;
 
-  const buttons = append(ctx.composer, () => create('div'));
-  style(buttons, {
-    'display': 'flex',
-    'flex-wrap': 'wrap',
-    'justify-content': 'flex-end',
-    'gap': '4px 8px',
-    'margin-top': '4px',
-  });
+  const buttons = append(ctx.composer, () => create('div', [], {
+    style: {
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'justify-content': 'flex-end',
+      'gap': '4px 8px',
+      'margin-top': '4px',
+    },
+  }));
 
   for (const word of words) {
-    const button = createButton(word);
+    const button = append(buttons, () => createButton(word));
     on(button, 'click', () => {
       ctx.textarea.value = word + ctx.textarea.value;
       ctx.textarea.dispatchEvent(new Event('input'));
@@ -47,30 +48,23 @@ function injectButtons(container: HTMLElement, words: string[]): void {
         ctx.submit.click();
       }, 200);
     });
-    buttons.appendChild(button);
   }
 }
 
 function createButton(text: string): HTMLElement {
-  const content = create('span');
-  html(content, text);
-  attrs(content, { 'class': 'woo-button-content' });
+  const button = create('button', [
+    'woo-button-main',
+    'woo-button-flat',
+    'woo-button-default',
+    'woo-button-m',
+    'woo-button-round',
+  ]);
 
-  const wrap = create('span');
-  attrs(wrap, { 'class': 'woo-button-wrap' });
-
-  const button = create('button');
-  attrs(button, {
-    'class': [
-      'woo-button-main',
-      'woo-button-flat',
-      'woo-button-default',
-      'woo-button-m',
-      'woo-button-round',
-    ].join(' '),
+  append(button, () => {
+    const wrap = create('span', ['woo-button-wrap']);
+    append(wrap, () => create('span', ['woo-button-content'], { html: text }));
+    return wrap;
   });
 
-  button.appendChild(wrap);
-  wrap.appendChild(content);
   return button;
 }

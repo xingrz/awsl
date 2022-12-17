@@ -37,8 +37,17 @@ export function toggle(element: HTMLElement, property: string, on: string, off: 
   return element;
 }
 
-export function create(tag: string): HTMLElement {
-  return document.createElement(tag);
+export function create(tag: string, classes: string[] = [], config?: {
+  attrs?: Record<string, string>;
+  style?: Record<string, string>;
+  html?: string;
+}): HTMLElement {
+  const element = document.createElement(tag);
+  if (classes) attrs(element, { 'class': classNames(classes) });
+  if (config?.attrs) attrs(element, config.attrs);
+  if (config?.style) style(element, config.style);
+  if (config?.html) html(element, config.html);
+  return element;
 }
 
 export function insertBefore(parent: ParentNode, child: Node, creator: () => HTMLElement): HTMLElement {
@@ -78,4 +87,8 @@ export function observe(element: HTMLElement, callback: MutationCallback): Mutat
   const observer = new MutationObserver(callback);
   observer.observe(element, { childList: true, subtree: true });
   return observer;
+}
+
+export function classNames(names: string[]): string {
+  return names.join(' ');
 }
