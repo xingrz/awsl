@@ -39,12 +39,12 @@ export function toggle(element: HTMLElement, property: string, on: string, off: 
 
 export type ICreator<T extends HTMLElement> = (parent: HTMLElement) => T;
 
-export function create(tag: string, classes: string[] = [], config: {
+export function create<T extends HTMLElement>(tag: string, classes: string[] = [], config: {
   attrs?: Record<string, string>;
   style?: Record<string, string>;
   html?: string;
-} = {}, children: ICreator<HTMLElement>[] = []): HTMLElement {
-  const element = document.createElement(tag);
+} = {}, children: ICreator<HTMLElement>[] = []): T {
+  const element = document.createElement(tag) as T;
   if (classes) attrs(element, { 'class': classNames(classes) });
   if (config.attrs) attrs(element, config.attrs);
   if (config.style) style(element, config.style);
