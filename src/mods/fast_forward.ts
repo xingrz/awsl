@@ -52,19 +52,15 @@ function injectButtons(container: HTMLElement, words: string[]): void {
 }
 
 function createButton(text: string): HTMLElement {
-  const button = create('button', [
+  return create('button', [
     'woo-button-main',
     'woo-button-flat',
     'woo-button-default',
     'woo-button-m',
     'woo-button-round',
+  ], {}, [
+    () => create('span', ['woo-button-wrap'], {}, [
+      () => create('span', ['woo-button-content'], { html: text }),
+    ]),
   ]);
-
-  append(button, () => {
-    const wrap = create('span', ['woo-button-wrap']);
-    append(wrap, () => create('span', ['woo-button-content'], { html: text }));
-    return wrap;
-  });
-
-  return button;
 }

@@ -37,32 +37,37 @@ export function toggle(element: HTMLElement, property: string, on: string, off: 
   return element;
 }
 
-export function create(tag: string, classes: string[] = [], config?: {
+export type ICreator<T extends HTMLElement> = (parent: HTMLElement) => T;
+
+export function create(tag: string, classes: string[] = [], config: {
   attrs?: Record<string, string>;
   style?: Record<string, string>;
   html?: string;
-}): HTMLElement {
+} = {}, children: ICreator<HTMLElement>[] = []): HTMLElement {
   const element = document.createElement(tag);
   if (classes) attrs(element, { 'class': classNames(classes) });
-  if (config?.attrs) attrs(element, config.attrs);
-  if (config?.style) style(element, config.style);
-  if (config?.html) html(element, config.html);
+  if (config.attrs) attrs(element, config.attrs);
+  if (config.style) style(element, config.style);
+  if (config.html) html(element, config.html);
+  for (const creator of children) {
+    append(element, creator);
+  }
   return element;
 }
 
-export function insertBefore(parent: ParentNode, child: Node, creator: () => HTMLElement): HTMLElement {
-  const element = creator();
+export function insertBefore<T extends HTMLElement>(parent: ParentNode, child: Node, creator: ICreator<T>): T {
+  const element = creator(parent as HTMLElement);
   parent.insertBefore(element, child);
   return element;
 }
 
-export function append<T extends HTMLElement>(parent: ParentNode, creator: () => T): T {
-  const element = creator();
+export function append<T extends HTMLElement>(parent: ParentNode, creator: ICreator<T>): T {
+  const element = creator(parent as HTMLElement);
   parent.append(element);
   return element;
 }
 
-export function $OR<T extends HTMLElement>(parent: ParentNode, selector: string, creator: () => T): T {
+export function $OR<T extends HTMLElement>(parent: ParentNode, selector: string, creator: ICreator<T>): T {
   const element = $<T>(parent, selector);
   if (element) return element;
   return append(parent, creator);
