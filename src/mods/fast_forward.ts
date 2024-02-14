@@ -1,19 +1,12 @@
 import { getValue } from '../utils/kv';
-import { $H, $$, on, create, append, attrs, observe } from '../utils/dom';
+import { $, $$, $H, append, attrs, bind, create, observe, on } from '../utils/dom';
 import { createButton } from '../utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
 
-observe(document.body, async function fastForward(): Promise<void> {
-  const composers = $$(document, '.Composer_mar1_ujs0j:not([awsl="yes"])');
-  if (!composers.length) return;
-
-  const words = (await getValue('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
-
-  for (const composer of composers) {
-    attrs(composer as HTMLElement, { 'awsl': 'yes' });
-    injectButtons(composer.parentElement!, words);
-  }
+let words: string[] = [];
+getValue('words', DEFAULT_WORDS).then(v => {
+  words = v.split(';').filter(t => !!t);
 });
 
 interface IComposeBar {
@@ -22,21 +15,38 @@ interface IComposeBar {
   composer: HTMLElement;
 }
 
-function injectButtons(container: HTMLElement, words: string[]): void {
-  const ctx = $H<IComposeBar>(container, {
-    textarea: '.Form_input_3JT2Q',
-    submit: '.Composer_btn_2XFOD',
-    composer: '.Composer_mar1_ujs0j',
-  });
-  if (!ctx) return;
+observe(document.body, function fastForward(): void {
+  const composers = $$(document, '.Composer_mar1_ujs0j');
+  for (const composer of composers) {
+    const ctx = $H<IComposeBar>(composer.parentElement!, {
+      textarea: '.Form_input_3JT2Q',
+      submit: '.Composer_btn_2XFOD',
+      composer: '.Composer_mar1_ujs0j',
+    });
+    if (!ctx) continue;
 
-  const buttons = append(ctx.composer, () => create('div', [], {
+    const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
+    const isForward = !!visibleLimits;
+
+    if (isForward) {
+      bind(ctx.composer, 'awsl-fastforward', '1', () => setupButtons(ctx));
+    } else {
+      attrs(ctx.composer, { 'awsl-fastforward': null });
+      destroyButtons(ctx);
+    }
+  }
+});
+
+function setupButtons(ctx: IComposeBar): HTMLElement {
+  const buttons = append(ctx.composer, () => create('div', [
+    'awsl-fastforward',
+  ], {
     style: {
       'display': 'flex',
       'flex-wrap': 'wrap',
       'justify-content': 'flex-end',
       'gap': '4px 8px',
-      'margin-top': '4px',
+      'margin-top': '8px',
     },
   }));
 
@@ -49,5 +59,13 @@ function injectButtons(container: HTMLElement, words: string[]): void {
         ctx.submit.click();
       }, 200);
     });
+  }
+
+  return buttons;
+}
+
+function destroyButtons(ctx: IComposeBar): void {
+  for (const el of $$(ctx.composer, '.awsl-fastforward')) {
+    el.remove();
   }
 }
