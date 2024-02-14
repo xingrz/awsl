@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.2.1
+// @version      2.2.2
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -24,6 +24,8 @@
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_kv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3);
+/* harmony import */ var _utils_weibo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4);
+
 
 
 const DEFAULT_WORDS = '草;awsl';
@@ -55,7 +57,7 @@ function injectButtons(container, words) {
         },
     }));
     for (const word of words) {
-        const button = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(buttons, () => createButton(word));
+        const button = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(buttons, () => (0,_utils_weibo__WEBPACK_IMPORTED_MODULE_2__.createButton)(word));
         (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(button, 'click', () => {
             ctx.textarea.value = word + ctx.textarea.value;
             ctx.textarea.dispatchEvent(new Event('input'));
@@ -64,21 +66,6 @@ function injectButtons(container, words) {
             }, 200);
         });
     }
-}
-function createButton(text) {
-    const button = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('button', [
-        'woo-button-main',
-        'woo-button-flat',
-        'woo-button-default',
-        'woo-button-m',
-        'woo-button-round',
-    ]);
-    (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(button, () => {
-        const wrap = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span', ['woo-button-wrap']);
-        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span', ['woo-button-content'], { html: text }));
-        return wrap;
-    });
-    return button;
 }
 
 
@@ -170,25 +157,28 @@ function toggle(element, property, on, off) {
     element.style.setProperty(property, is ? off : on);
     return element;
 }
-function create(tag, classes = [], config) {
+function create(tag, classes = [], config = {}, children = []) {
     const element = document.createElement(tag);
     if (classes)
         attrs(element, { 'class': classNames(classes) });
-    if (config?.attrs)
+    if (config.attrs)
         attrs(element, config.attrs);
-    if (config?.style)
+    if (config.style)
         style(element, config.style);
-    if (config?.html)
+    if (config.html)
         html(element, config.html);
+    for (const creator of children) {
+        append(element, creator);
+    }
     return element;
 }
 function insertBefore(parent, child, creator) {
-    const element = creator();
+    const element = creator(parent);
     parent.insertBefore(element, child);
     return element;
 }
 function append(parent, creator) {
-    const element = creator();
+    const element = creator(parent);
     parent.append(element);
     return element;
 }
@@ -239,6 +229,31 @@ function bind(element, attrName, value, updater) {
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "createButton": () => (/* binding */ createButton)
+/* harmony export */ });
+/* harmony import */ var _dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
+
+function createButton(text, type = 'default') {
+    return (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('button', [
+        'woo-button-main',
+        'woo-button-flat',
+        `woo-button-${type}`,
+        'woo-button-m',
+        'woo-button-round',
+    ], {}, [
+        () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('span', ['woo-button-wrap'], {}, [
+            () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('span', ['woo-button-content'], { html: text }),
+        ]),
+    ]);
+}
+
+
+/***/ }),
+/* 5 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
 
 (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.observe)(document.body, function adjustRouter() {
@@ -272,7 +287,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -288,7 +303,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -313,7 +328,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -328,7 +343,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -360,7 +375,7 @@ __webpack_require__.r(__webpack_exports__);
             if (context.userInfo.remark) {
                 info.push(`备注：${context.userInfo.remark}`);
             }
-            if (context.userInfo.follow_me) {
+            if (context.userInfo.follow_me && context.userInfo.following) {
                 info.push('互相关注');
             }
             if (context.region_name) {
@@ -434,11 +449,11 @@ var __webpack_exports__ = {};
 (() => {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mods_fast_forward__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
-/* harmony import */ var _mods_home_router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(4);
-/* harmony import */ var _mods_nav_items__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(5);
-/* harmony import */ var _mods_no_retweet_menu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6);
-/* harmony import */ var _mods_remove_ads__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7);
-/* harmony import */ var _mods_user_remark__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(8);
+/* harmony import */ var _mods_home_router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
+/* harmony import */ var _mods_nav_items__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
+/* harmony import */ var _mods_no_retweet_menu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7);
+/* harmony import */ var _mods_remove_ads__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8);
+/* harmony import */ var _mods_user_remark__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(9);
 
 
 
