@@ -56,10 +56,16 @@ export function insertBefore(parent: ParentNode, child: Node, creator: () => HTM
   return element;
 }
 
-export function append(parent: ParentNode, creator: () => HTMLElement): HTMLElement {
+export function append<T extends HTMLElement>(parent: ParentNode, creator: () => T): T {
   const element = creator();
   parent.append(element);
   return element;
+}
+
+export function $OR<T extends HTMLElement>(parent: ParentNode, selector: string, creator: () => T): T {
+  const element = $<T>(parent, selector);
+  if (element) return element;
+  return append(parent, creator);
 }
 
 export function attrs(element: HTMLElement, attrs: Record<string, string | null>): HTMLElement {
@@ -91,4 +97,12 @@ export function observe(element: HTMLElement, callback: MutationCallback): Mutat
 
 export function classNames(names: string[]): string {
   return names.join(' ');
+}
+
+export function bind(element: HTMLElement, attrName: string, value: string, updater: () => void) {
+  const cache = attr(element, attrName);
+  if (cache != value) {
+    attrs(element, { [attrName]: value });
+    updater();
+  }
 }

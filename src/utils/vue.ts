@@ -24,3 +24,9 @@ export interface IApp {
     uid: number;
   }
 }
+
+export interface INode<C> {
+  $vnode: {
+    context: C;
+  };
+}
