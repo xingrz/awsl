@@ -1,5 +1,6 @@
 import { getValue } from '../utils/kv';
 import { $H, $$, on, create, append, attrs, observe } from '../utils/dom';
+import { createButton } from '../utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
 
@@ -49,18 +50,4 @@ function injectButtons(container: HTMLElement, words: string[]): void {
       }, 200);
     });
   }
-}
-
-function createButton(text: string): HTMLElement {
-  return create('button', [
-    'woo-button-main',
-    'woo-button-flat',
-    'woo-button-default',
-    'woo-button-m',
-    'woo-button-round',
-  ], {}, [
-    () => create('span', ['woo-button-wrap'], {}, [
-      () => create('span', ['woo-button-content'], { html: text }),
-    ]),
-  ]);
 }
