@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.1.0
+// @version      2.2.1
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -131,11 +131,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "create": () => (/* binding */ create),
 /* harmony export */   "insertBefore": () => (/* binding */ insertBefore),
 /* harmony export */   "append": () => (/* binding */ append),
+/* harmony export */   "$OR": () => (/* binding */ $OR),
 /* harmony export */   "attrs": () => (/* binding */ attrs),
 /* harmony export */   "attr": () => (/* binding */ attr),
 /* harmony export */   "html": () => (/* binding */ html),
 /* harmony export */   "observe": () => (/* binding */ observe),
-/* harmony export */   "classNames": () => (/* binding */ classNames)
+/* harmony export */   "classNames": () => (/* binding */ classNames),
+/* harmony export */   "bind": () => (/* binding */ bind)
 /* harmony export */ });
 function $(parent, selecor) {
     return parent.querySelector(selecor);
@@ -190,6 +192,12 @@ function append(parent, creator) {
     parent.append(element);
     return element;
 }
+function $OR(parent, selector, creator) {
+    const element = $(parent, selector);
+    if (element)
+        return element;
+    return append(parent, creator);
+}
 function attrs(element, attrs) {
     for (const key in attrs) {
         const value = attrs[key];
@@ -216,6 +224,13 @@ function observe(element, callback) {
 }
 function classNames(names) {
     return names.join(' ');
+}
+function bind(element, attrName, value, updater) {
+    const cache = attr(element, attrName);
+    if (cache != value) {
+        attrs(element, { [attrName]: value });
+        updater();
+    }
 }
 
 
@@ -269,22 +284,6 @@ __webpack_require__.r(__webpack_exports__);
         (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.style)(navAll, { 'display': 'none' });
         (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.attrs)(navAll, { 'awsl': 'yes' });
     }
-    const ctx = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$H)(document, {
-        app: '#app',
-        logo: '.Nav_logoWrap_2fPbO[href="/"]',
-        tabHome: '.woo-tab-nav a.Ctrls_alink_1L3hP[href="/"]',
-    });
-    if (!ctx)
-        return;
-    const uid = ctx.app.__vue__?.config?.uid;
-    if (!uid)
-        return;
-    (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.attrs)(ctx.logo, {
-        'href': `/mygroups?gid=11000${uid}`,
-    });
-    (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.attrs)(ctx.tabHome, {
-        'href': `/mygroups?gid=11000${uid}`,
-    });
 });
 
 
@@ -324,6 +323,51 @@ __webpack_require__.r(__webpack_exports__);
     const ads = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$$)(document, '.TipsAd_wrap_3QB_0');
     for (const ad of ads) {
         ad.remove();
+    }
+});
+
+
+/***/ }),
+/* 8 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
+
+(0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.observe)(document.body, function userRemark() {
+    const headNicks = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$$)(document, '.head_nick_1yix2');
+    for (const headNick of headNicks) {
+        const container = headNick;
+        const context = container.__vue__?.$vnode.context;
+        if (!context)
+            continue;
+        const headName = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$)(container, '.head_name_24eEB > span');
+        if (!headName)
+            continue;
+        const infoBox = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$OR)(container, '.awsl-infobox', () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', [
+            'awsl-infobox',
+        ], {
+            style: {
+                'color': '#999',
+                'font-size': '80%',
+                'font-weight': 'normal',
+                'margin-left': '0.5em',
+            },
+        }));
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.bind)(container, 'awsl-infobox-id', context.id, () => {
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.html)(headName, context.userInfo.screen_name);
+            const info = [];
+            if (context.userInfo.remark) {
+                info.push(`备注：${context.userInfo.remark}`);
+            }
+            if (context.userInfo.follow_me) {
+                info.push('互相关注');
+            }
+            if (context.region_name) {
+                info.push(context.region_name);
+            }
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.html)(infoBox, info.join('&nbsp;|&nbsp;'));
+        });
     }
 });
 
@@ -394,6 +438,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mods_nav_items__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(5);
 /* harmony import */ var _mods_no_retweet_menu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6);
 /* harmony import */ var _mods_remove_ads__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7);
+/* harmony import */ var _mods_user_remark__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(8);
+
 
 
 
