@@ -54,7 +54,7 @@ observe(document.body, function userRemark(): void {
         info.push(`备注：${context.userInfo.remark}`);
       }
 
-      if (context.userInfo.follow_me) {
+      if (context.userInfo.follow_me && context.userInfo.following) {
         info.push('互相关注');
       }
 
