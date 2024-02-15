@@ -1,5 +1,5 @@
 import { getValue, setValue } from '../utils/kv';
-import { $, $$, $H, ICreator, append, attrs, bind, create, insertBefore, observe, on } from '../utils/dom';
+import { $, $$, $H, ICreator, append, attr, attrs, bind, create, html, insertBefore, observe, on, style } from '../utils/dom';
 import { createButton, createModal } from '../utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
@@ -98,6 +98,11 @@ function setupMenus(ctx: IComposeBar, visibleLimits: HTMLElement): void {
     }, [() => menu]));
 
     return menu;
+  }
+
+  if (ctx.textarea.value.length > 0) {
+    const edit = insertMenu('编辑');
+    on(edit, 'click', () => toggleEdit(ctx, edit));
   }
 
   const custom = insertMenu('自定义');
@@ -235,4 +240,116 @@ function showCustom(ctx: IComposeBar): void {
     destroyButtons(ctx);
     setupButtons(ctx);
   });
+}
+
+function toggleEdit(ctx: IComposeBar, editBtn: HTMLElement): void {
+  const container = ctx.textarea.parentElement!;
+  const isEditing = ctx.textarea.style.display == 'none';
+
+  if (isEditing) {
+    $(container, '.awsl-editing')?.remove();
+
+    style(ctx.textarea, { 'display': '' });
+
+    // Need some tricks to refresh the size of textarea
+    const value = ctx.textarea.value;
+    ctx.textarea.value = value + ' ';
+    ctx.textarea.dispatchEvent(new Event('input'));
+    setTimeout(() => {
+      ctx.textarea.value = value;
+      ctx.textarea.dispatchEvent(new Event('input'));
+      ctx.textarea.focus();
+      ctx.textarea.setSelectionRange(0, 0);
+    }, 0);
+
+    style(editBtn, { 'color': '' });
+    html(editBtn, '编辑');
+  } else {
+    const [first, ...others] = escapeLinks(ctx.textarea.value).split('//').map(unescapeLinks);
+
+    if (others.length == 0) {
+      ctx.textarea.focus();
+      return;
+    }
+
+    style(ctx.textarea, { 'display': 'none' });
+    container.classList.add('focus');
+
+    const editor = append(container, () => create('div', [
+      'awsl-editing',
+      'woo-box-flex',
+      'woo-box-column',
+    ], {
+      style: {
+        'gap': '2px',
+      },
+    }));
+
+    const items: HTMLElement[] = [];
+
+    function updateTextarea(): void {
+      const values = items
+        .filter(item => attr(item, 'data-awsl-removed') != 'yes')
+        .map(item => attr(item, 'data-awsl-text'));
+
+      ctx.textarea.value = [first, ...values].join('//');
+      ctx.textarea.dispatchEvent(new Event('input'));
+    }
+
+    for (const item of others) {
+      const [_match, _prefix, name, text] = item.match(/^(([^\:]+)\:)?(.*)$/) || [];
+
+      const wrap = append(editor, () => create('label', [
+        'woo-box-flex',
+        'woo-box-alignStart',
+      ], {
+        style: {
+          'gap': '4px',
+          'cursor': 'pointer',
+          'user-select': 'none',
+        },
+        attrs: {
+          'data-awsl-text': item,
+          'data-awsl-removed': 'no',
+        },
+      }));
+      items.push(wrap);
+
+      const checkbox = append(wrap, () => create<HTMLInputElement>('input', [], {
+        style: {
+          'width': 'auto',
+          'margin': '6px 0',
+        },
+        attrs: {
+          'type': 'checkbox',
+          'checked': 'yes',
+        },
+      }));
+      on(checkbox, 'change', () => {
+        attrs(wrap, { 'data-awsl-removed': checkbox.checked ? 'no' : 'yes' });
+        updateTextarea();
+      });
+
+      const nameHtml = name
+        ? `<span style="color: var(--w-alink)">${name}</span>: `
+        : '';
+
+      const textHtml = text
+        ? `<span style="color: var(--w-main)">${text}</span>`
+        : `<span style="color: var(--w-sub)">(空)</span>`;
+
+      append(wrap, () => create('span', [], { html: `${nameHtml}${textHtml}` }));
+    }
+
+    style(editBtn, { 'color': 'var(--w-brand)' });
+    html(editBtn, '完成');
+  }
+}
+
+function escapeLinks(value: string): string {
+  return value.replace(/(http|https)\:\/\//g, '$1:$$$$');
+}
+
+function unescapeLinks(value: string): string {
+  return value.replace(/(http|https)\:\$\$/g, '$1://');
 }
