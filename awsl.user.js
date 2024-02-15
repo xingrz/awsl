@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.2.2
+// @version      2.3.0
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -29,31 +29,45 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const DEFAULT_WORDS = '草;awsl';
-(0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.observe)(document.body, async function fastForward() {
-    const composers = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(document, '.Composer_mar1_ujs0j:not([awsl="yes"])');
-    if (!composers.length)
-        return;
-    const words = (await (0,_utils_kv__WEBPACK_IMPORTED_MODULE_0__.getValue)('words', DEFAULT_WORDS)).split(';').filter(t => !!t);
+let words = [];
+(0,_utils_kv__WEBPACK_IMPORTED_MODULE_0__.getValue)('words', DEFAULT_WORDS).then(v => {
+    words = v.split(';').filter(t => !!t);
+});
+(0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.observe)(document.body, function fastForward() {
+    const composers = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(document, '.Composer_mar1_ujs0j');
     for (const composer of composers) {
-        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(composer, { 'awsl': 'yes' });
-        injectButtons(composer.parentElement, words);
+        const ctx = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$H)(composer.parentElement, {
+            textarea: '.Form_input_3JT2Q',
+            submit: '.Composer_btn_2XFOD',
+            composer: '.Composer_mar1_ujs0j',
+        });
+        if (!ctx)
+            continue;
+        const visibleLimits = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$)(ctx.composer, '.Visible_limits_11OKi');
+        const isForward = !!visibleLimits;
+        if (isForward) {
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.bind)(ctx.composer, 'awsl-fastforward', '1', () => {
+                setupButtons(ctx);
+                setupMenus(ctx, visibleLimits);
+            });
+        }
+        else {
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(ctx.composer, { 'awsl-fastforward': null });
+            destroyButtons(ctx);
+            destroyMenus(ctx);
+        }
     }
 });
-function injectButtons(container, words) {
-    const ctx = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$H)(container, {
-        textarea: '.Form_input_3JT2Q',
-        submit: '.Composer_btn_2XFOD',
-        composer: '.Composer_mar1_ujs0j',
-    });
-    if (!ctx)
-        return;
-    const buttons = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(ctx.composer, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [], {
+function setupButtons(ctx) {
+    const buttons = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(ctx.composer, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+        'awsl-fastforward',
+        'woo-box-flex',
+        'woo-box-wrap',
+        'woo-box-justifyEnd',
+    ], {
         style: {
-            'display': 'flex',
-            'flex-wrap': 'wrap',
-            'justify-content': 'flex-end',
             'gap': '4px 8px',
-            'margin-top': '4px',
+            'margin-top': '8px',
         },
     }));
     for (const word of words) {
@@ -66,6 +80,150 @@ function injectButtons(container, words) {
             }, 200);
         });
     }
+    return buttons;
+}
+function destroyButtons(ctx) {
+    for (const el of (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(ctx.composer, '.awsl-fastforward')) {
+        el.remove();
+    }
+}
+function setupMenus(ctx, visibleLimits) {
+    function insertMenu(text) {
+        const menu = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span', [], {
+            style: {
+                'cursor': 'pointer',
+                'user-select': 'none',
+            },
+            html: text,
+        });
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.insertBefore)(visibleLimits.parentNode, visibleLimits, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+            'woo-panel-main',
+            'woo-panel-right',
+            'awsl-fastforward-menu',
+        ], {
+            style: {
+                'font-size': '14px',
+                'color': 'var(--w-sub)',
+                'margin-right': '10px',
+                'padding-right': '10px',
+            },
+        }, [() => menu]));
+        return menu;
+    }
+    const custom = insertMenu('自定义');
+    (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(custom, 'click', () => showCustom(ctx));
+}
+function destroyMenus(ctx) {
+    for (const el of (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$$)(ctx.composer, '.awsl-fastforward-menu')) {
+        el.remove();
+    }
+}
+function createModalWithButtons(title, content, cancelText, okText, onOk) {
+    return (0,_utils_weibo__WEBPACK_IMPORTED_MODULE_2__.createModal)(title, (modal) => [
+        () => content(modal),
+        () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+            'wbpro-layer-btn',
+            'woo-box-flex',
+            'woo-box-justifyCenter',
+        ], {}, [
+            () => {
+                const close = (0,_utils_weibo__WEBPACK_IMPORTED_MODULE_2__.createButton)(cancelText, 'default', ['wbpro-layer-btn-item']);
+                (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(close, 'click', () => modal.remove());
+                return close;
+            },
+            () => {
+                const save = (0,_utils_weibo__WEBPACK_IMPORTED_MODULE_2__.createButton)(okText, 'primary', ['wbpro-layer-btn-item']);
+                (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(save, 'click', () => {
+                    onOk(modal);
+                    modal.remove();
+                });
+                return save;
+            },
+        ]),
+    ]);
+}
+function showCustom(ctx) {
+    const container = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+        'woo-box-flex',
+        'woo-box-wrap',
+    ], {
+        style: {
+            'padding': '20px 20px 0',
+            'gap': '8px',
+        },
+    });
+    function createIconBtn(title, icon) {
+        return (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('i', ['woo-font', `woo-font--${icon}`], {
+            style: {
+                'color': 'var(--w-fonticon)',
+                'cursor': 'pointer',
+                'margin': '0 8px',
+            },
+            attrs: { title },
+        });
+    }
+    function createItemWrap() {
+        return (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+            'woo-box-flex',
+            'woo-box-alignCenter',
+        ], {
+            style: {
+                'border': '1px solid var(--w-color-gray-7)',
+                'border-radius': 'var(--w-border-radius)',
+                'color': 'var(--w-main)',
+                'font-size': '13px',
+                'height': '28px',
+            },
+        });
+    }
+    let currentWords = [...words];
+    function fillWords() {
+        container.innerHTML = '';
+        for (const word of currentWords) {
+            const wrap = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(container, () => createItemWrap());
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span', [], {
+                style: {
+                    'padding': '4px 8px',
+                },
+                html: word,
+            }));
+            const del = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => createIconBtn('删除', 'cross'));
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(del, 'click', () => {
+                currentWords = currentWords.filter(t => t != word);
+                fillWords();
+            });
+        }
+        {
+            const wrap = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(container, () => createItemWrap());
+            const input = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('input', [], {
+                style: {
+                    'padding': '4px 8px',
+                    'color': 'var(--w-main)',
+                    'font-size': '13px',
+                    'border': 'none',
+                    'outline': 'none',
+                    'background': 'none',
+                },
+                attrs: { placeholder: '添加短语' },
+            }));
+            const add = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => createIconBtn('添加', 'check'));
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(add, 'click', () => {
+                const value = input.value.trim();
+                if (value) {
+                    currentWords.push(value);
+                    input.value = '';
+                    fillWords();
+                }
+            });
+        }
+    }
+    fillWords();
+    createModalWithButtons('自定义一键转发', (_modal) => container, '关闭', '保存', async (_modal) => {
+        words = [...currentWords];
+        await (0,_utils_kv__WEBPACK_IMPORTED_MODULE_0__.setValue)('words', words.join(';'));
+        destroyButtons(ctx);
+        setupButtons(ctx);
+    });
 }
 
 
@@ -230,12 +388,14 @@ function bind(element, attrName, value, updater) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "createButton": () => (/* binding */ createButton)
+/* harmony export */   "createButton": () => (/* binding */ createButton),
+/* harmony export */   "createModal": () => (/* binding */ createModal)
 /* harmony export */ });
 /* harmony import */ var _dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
 
-function createButton(text, type = 'default') {
+function createButton(text, type = 'default', classes = []) {
     return (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('button', [
+        ...classes,
         'woo-button-main',
         'woo-button-flat',
         `woo-button-${type}`,
@@ -246,6 +406,46 @@ function createButton(text, type = 'default') {
             () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('span', ['woo-button-content'], { html: text }),
         ]),
     ]);
+}
+function createModal(title, content) {
+    const app = (0,_dom__WEBPACK_IMPORTED_MODULE_0__.$)(document.body, '#app');
+    if (!app)
+        return;
+    (0,_dom__WEBPACK_IMPORTED_MODULE_0__.append)(app, () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', [
+        'woo-box-flex',
+        'woo-box-alignCenter',
+        'woo-box-justifyCenter',
+        'woo-modal-wrap',
+    ], {}, [
+        (modal) => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['woo-modal-main'], {}, [
+            () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['wbpro-layer'], {}, [
+                () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['woo-panel-main', 'woo-panel-bottom'], {}, [
+                    () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['wbpro-layer-tit', 'woo-box-flex'], {}, [
+                        () => (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['wbpro-layer-tit-text', 'woo-box-item-flex'], {
+                            style: { 'align-self': 'center' },
+                            html: title,
+                        }),
+                        () => {
+                            const close = (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', [
+                                'wbpro-layer-tit-opt',
+                                'woo-box-flex',
+                                'woo-box-alignCenter',
+                                'woo-box-justifyCenter',
+                            ], {
+                                html: `<i class="woo-font woo-font--cross"></i>`,
+                            });
+                            return (0,_dom__WEBPACK_IMPORTED_MODULE_0__.on)(close, 'click', () => modal.remove());
+                        },
+                    ]),
+                ]),
+                ...content(modal),
+            ]),
+        ]),
+        (modal) => {
+            const mask = (0,_dom__WEBPACK_IMPORTED_MODULE_0__.create)('div', ['woo-modal-mask']);
+            return (0,_dom__WEBPACK_IMPORTED_MODULE_0__.on)(mask, 'click', () => modal.remove());
+        },
+    ]));
 }
 
 
