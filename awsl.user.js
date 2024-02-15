@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.3.0
+// @version      2.4.0
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -109,6 +109,10 @@ function setupMenus(ctx, visibleLimits) {
             },
         }, [() => menu]));
         return menu;
+    }
+    if (ctx.textarea.value.length > 0) {
+        const edit = insertMenu('编辑');
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(edit, 'click', () => toggleEdit(ctx, edit));
     }
     const custom = insertMenu('自定义');
     (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(custom, 'click', () => showCustom(ctx));
@@ -224,6 +228,99 @@ function showCustom(ctx) {
         destroyButtons(ctx);
         setupButtons(ctx);
     });
+}
+function toggleEdit(ctx, editBtn) {
+    const container = ctx.textarea.parentElement;
+    const isEditing = ctx.textarea.style.display == 'none';
+    if (isEditing) {
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.$)(container, '.awsl-editing')?.remove();
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.style)(ctx.textarea, { 'display': '' });
+        // Need some tricks to refresh the size of textarea
+        const value = ctx.textarea.value;
+        ctx.textarea.value = value + ' ';
+        ctx.textarea.dispatchEvent(new Event('input'));
+        setTimeout(() => {
+            ctx.textarea.value = value;
+            ctx.textarea.dispatchEvent(new Event('input'));
+            ctx.textarea.focus();
+            ctx.textarea.setSelectionRange(0, 0);
+        }, 0);
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.style)(editBtn, { 'color': '' });
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.html)(editBtn, '编辑');
+    }
+    else {
+        const [first, ...others] = escapeLinks(ctx.textarea.value).split('//').map(unescapeLinks);
+        if (others.length == 0) {
+            ctx.textarea.focus();
+            return;
+        }
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.style)(ctx.textarea, { 'display': 'none' });
+        container.classList.add('focus');
+        const editor = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(container, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('div', [
+            'awsl-editing',
+            'woo-box-flex',
+            'woo-box-column',
+        ], {
+            style: {
+                'gap': '2px',
+            },
+        }));
+        const items = [];
+        function updateTextarea() {
+            const values = items
+                .filter(item => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.attr)(item, 'data-awsl-removed') != 'yes')
+                .map(item => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.attr)(item, 'data-awsl-text'));
+            ctx.textarea.value = [first, ...values].join('//');
+            ctx.textarea.dispatchEvent(new Event('input'));
+        }
+        for (const item of others) {
+            const [_match, _prefix, name, text] = item.match(/^(([^\:]+)\:)?(.*)$/) || [];
+            const wrap = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(editor, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('label', [
+                'woo-box-flex',
+                'woo-box-alignStart',
+            ], {
+                style: {
+                    'gap': '4px',
+                    'cursor': 'pointer',
+                    'user-select': 'none',
+                },
+                attrs: {
+                    'data-awsl-text': item,
+                    'data-awsl-removed': 'no',
+                },
+            }));
+            items.push(wrap);
+            const checkbox = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('input', [], {
+                style: {
+                    'width': 'auto',
+                    'margin': '6px 0',
+                },
+                attrs: {
+                    'type': 'checkbox',
+                    'checked': 'yes',
+                },
+            }));
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.on)(checkbox, 'change', () => {
+                (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.attrs)(wrap, { 'data-awsl-removed': checkbox.checked ? 'no' : 'yes' });
+                updateTextarea();
+            });
+            const nameHtml = name
+                ? `<span style="color: var(--w-alink)">${name}</span>: `
+                : '';
+            const textHtml = text
+                ? `<span style="color: var(--w-main)">${text}</span>`
+                : `<span style="color: var(--w-sub)">(空)</span>`;
+            (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.append)(wrap, () => (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.create)('span', [], { html: `${nameHtml}${textHtml}` }));
+        }
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.style)(editBtn, { 'color': 'var(--w-brand)' });
+        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_1__.html)(editBtn, '完成');
+    }
+}
+function escapeLinks(value) {
+    return value.replace(/(http|https)\:\/\//g, '$1:$$$$');
+}
+function unescapeLinks(value) {
+    return value.replace(/(http|https)\:\$\$/g, '$1://');
 }
 
 
@@ -456,59 +553,6 @@ function createModal(title, content) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
 
-(0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.observe)(document.body, function adjustRouter() {
-    const app = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$)(document, '#app:not([awsl="yes"])');
-    if (!app)
-        return;
-    const vue = app.__vue__;
-    if (!vue)
-        return;
-    const uid = vue.config?.uid;
-    if (!uid)
-        return;
-    const router = vue._router;
-    if (!router)
-        return;
-    (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.attrs)(app, { 'awsl': 'yes' });
-    router.beforeEach((to, _from, next) => {
-        if (to.name == 'home') {
-            next({
-                name: 'mygroups',
-                query: {
-                    gid: `11000${uid}`,
-                },
-            });
-        }
-        else {
-            next();
-        }
-    });
-});
-
-
-/***/ }),
-/* 6 */
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
-
-(0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.observe)(document.body, function adjustNavItems() {
-    const navAll = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$)(document, '.Nav_inner_1QCVO a.ALink_none_1w6rm[href="/"]:not([awsl="yes"])');
-    if (navAll) {
-        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.style)(navAll, { 'display': 'none' });
-        (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.attrs)(navAll, { 'awsl': 'yes' });
-    }
-});
-
-
-/***/ }),
-/* 7 */
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _utils_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
-
 (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.observe)(document.body, function noRetweetMenu() {
     const popMenus = (0,_utils_dom__WEBPACK_IMPORTED_MODULE_0__.$$)(document, '.toolbar_item_1ky_D .woo-pop-main:not([awsl="yes"])');
     for (const popMenu of popMenus) {
@@ -528,7 +572,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 8 */
+/* 6 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -543,7 +587,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 9 */
+/* 7 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -649,13 +693,9 @@ var __webpack_exports__ = {};
 (() => {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mods_fast_forward__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
-/* harmony import */ var _mods_home_router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
-/* harmony import */ var _mods_nav_items__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
-/* harmony import */ var _mods_no_retweet_menu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7);
-/* harmony import */ var _mods_remove_ads__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8);
-/* harmony import */ var _mods_user_remark__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(9);
-
-
+/* harmony import */ var _mods_no_retweet_menu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
+/* harmony import */ var _mods_remove_ads__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
+/* harmony import */ var _mods_user_remark__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7);
 
 
 
