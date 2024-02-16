@@ -1,3 +1,4 @@
+import './mods/expand_pics';
 import './mods/fast_forward';
 import './mods/no_retweet_menu';
 import './mods/remove_ads';

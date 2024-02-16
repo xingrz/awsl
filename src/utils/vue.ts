@@ -10,6 +10,9 @@ export interface IVue {
       next: (next?: false | string | IRoute) => void
     ) => void): void;
   };
+  $Bus: {
+    $emit: (type: string, ...args: unknown[]) => void;
+  };
 }
 
 export interface IRoute {
