@@ -25,9 +25,8 @@ interface IPictureBox {
 }
 
 observe(document.body, function expandPics(): void {
-  const containers = $$(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
-  for (const el of containers) {
-    const container = el as VueHTMLElement<INode<IPictureBox>>;
+  const containers = $$<VueHTMLElement<INode<IPictureBox>>>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
+  for (const container of containers) {
     attrs(container, { 'awsl-picbox': 'yes' });
 
     const vue = container.__vue__;

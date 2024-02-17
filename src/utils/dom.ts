@@ -2,7 +2,7 @@ export function $<T extends HTMLElement>(parent: ParentNode, selecor: string): T
   return parent.querySelector(selecor);
 }
 
-export function $$(parent: ParentNode, selecor: string): NodeListOf<Element> {
+export function $$<T extends HTMLElement>(parent: ParentNode, selecor: string): NodeListOf<T> {
   return parent.querySelectorAll(selecor);
 }
 

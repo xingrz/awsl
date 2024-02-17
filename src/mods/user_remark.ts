@@ -24,10 +24,8 @@ interface IStatusItem {
 }
 
 observe(document.body, function userRemark(): void {
-  const headNicks = $$(document, '.head_nick_1yix2');
-  for (const headNick of headNicks) {
-    const container = headNick as VueHTMLElement<INode<IStatusItem>>;
-
+  const headNicks = $$<VueHTMLElement<INode<IStatusItem>>>(document, '.head_nick_1yix2');
+  for (const container of headNicks) {
     const context = container.__vue__?.$vnode.context
     if (!context) continue;
 
