@@ -1,4 +1,4 @@
-import { $, $$, $H, append, attrs, create, html, observe } from '../utils/dom';
+import { $, $$, $H, append, attrs, create, html, insertBefore, observe } from '../utils/dom';
 import { IVNodeContext, VueHTMLElement } from '../utils/vue';
 
 interface IUserInfo {
@@ -25,7 +25,7 @@ interface IStatusContext {
 }
 
 interface IRetweetContext {
-  data: {
+  transData: {
     id: string;
     region_name: string;
     source: string;
@@ -34,32 +34,55 @@ interface IRetweetContext {
   };
 }
 
+type IStatusElement = VueHTMLElement<IVNodeContext<IStatusContext>>;
+type IRetweetElement = VueHTMLElement<IVNodeContext<IRetweetContext>>;
+
 const SPLITTEER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
 
 observe(document.body, function userRemark(): void {
-  const headNicks = $$<VueHTMLElement<IVNodeContext<IStatusContext>>>(document, '.head_nick_1yix2:not([awsl-infobox="yes"])');
-  for (const container of headNicks) {
+  for (const container of $$<IStatusElement>(document, '.head_content_wrap_27749:not([awsl-infobox="yes"])')) {
     attrs(container, { 'awsl-infobox': 'yes' });
 
     const context = container.__vue__?.$vnode.context
     if (!context) continue;
 
-    const headName = $(container, '.head_name_24eEB > span');
-    if (!headName) continue;
-    html(headName, context.userInfo.screen_name);
+    const ctx = $H<{
+      nick: HTMLElement;
+      nickName: HTMLElement;
+      from: HTMLElement;
+    }>(container, {
+      nick: '.head_nick_1yix2',
+      nickName: '.head_name_24eEB > span',
+      from: '.head-info_from_3FX0m > .woo-box-flex',
+    });
+    if (!ctx) continue;
+
+    if (context.region_name) {
+      const ip = $(ctx.from, '.head-info_ip_3ywCW');
+      if (!ip) {
+        const ip = create('div', ['head-info_ip_3ywCW'], {
+          attrs: { title: context.region_name },
+          html: context.region_name,
+        });
+        const source = $(ctx.from, '.head-info_source_2zcEX');
+        if (source) {
+          insertBefore(ctx.from, source, () => ip);
+        } else {
+          append(ctx.from, () => ip);
+        }
+      }
+    }
 
     const info: string[] = [];
     if (context.userInfo.remark) {
+      html(ctx.nickName, context.userInfo.screen_name);
       info.push(`备注：${context.userInfo.remark}`);
     }
-    if (context.userInfo.follow_me && context.userInfo.following) {
-      info.push('互相关注');
-    }
-    if (context.region_name) {
-      info.push(context.region_name);
+    if (context.userInfo.follow_me) {
+      info.push(context.userInfo.following ? '互相关注' : '关注了我');
     }
 
-    append(container, () => create('div', [], {
+    append(ctx.nick, () => create('div', [], {
       style: {
         'color': 'var(--w-sub)',
         'font-size': '80%',
@@ -72,39 +95,51 @@ observe(document.body, function userRemark(): void {
 });
 
 observe(document.body, function userRemark(): void {
-  const reTextNames = $$<VueHTMLElement<IVNodeContext<IRetweetContext>>>(document, '.detail_reText_30vF1 > div > .woo-box-flex:not([awsl-infobox="yes"])');
-  for (const container of reTextNames) {
+  for (const container of $$<IRetweetElement>(document, '.Feed_retweet_JqZJb:not([awsl-infobox="yes"])')) {
     attrs(container, { 'awsl-infobox': 'yes' });
 
-    const data = container.__vue__?.$vnode.context.data;
+    const data = container.__vue__?.$vnode.context.transData;
     if (!data) continue;
 
     const ctx = $H<{
-      nick: HTMLElement;
-      verify: HTMLElement;
+      head: HTMLElement;
+      headNick: HTMLElement;
+      headVerify: HTMLElement;
+      from: HTMLElement;
     }>(container, {
-      nick: '.detail_nick_u-ffy',
-      verify: '.detail_verify_1GOx9',
+      head: '.detail_reText_30vF1 > div > .woo-box-flex',
+      headNick: '.detail_nick_u-ffy',
+      headVerify: '.detail_verify_1GOx9',
+      from: '.head-info_from_3FX0m > .woo-box-flex',
     });
     if (!ctx) continue;
 
-    html(ctx.nick, data.user.screen_name);
+    if (data.region_name) {
+      append(ctx.from, () => create('div', ['head-info_ip_3ywCW'], {
+        attrs: { title: data.region_name },
+        html: data.region_name,
+      }));
+    }
+    if (data.source) {
+      append(ctx.from, () => create('div', ['head-info_cut_1tPQI', 'head-info_source_2zcEX'], {
+        html: `来自 ${data.source}`,
+      }));
+    }
+
     if (!data.user.verified) {
-      ctx.verify.remove();
+      ctx.headVerify.remove();
     }
 
     const info: string[] = [];
     if (data.user.remark) {
+      html(ctx.headNick, data.user.screen_name);
       info.push(`备注：${data.user.remark}`);
     }
     if (data.user.follow_me) {
       info.push(data.user.following ? '互相关注' : '关注了我');
     }
-    if (data.region_name) {
-      info.push(data.region_name);
-    }
 
-    append(container, () => create('div', [], {
+    append(ctx.head, () => create('div', [], {
       style: {
         'color': 'var(--w-sub)',
         'font-size': '80%',
