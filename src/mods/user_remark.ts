@@ -23,6 +23,8 @@ interface IStatusContext {
   userInfo: IUserInfo;
 }
 
+const SPLITTEER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
+
 observe(document.body, function userRemark(): void {
   const headNicks = $$<VueHTMLElement<IVNodeContext<IStatusContext>>>(document, '.head_nick_1yix2:not([awsl-infobox="yes"])');
   for (const container of headNicks) {
@@ -48,12 +50,12 @@ observe(document.body, function userRemark(): void {
 
     append(container, () => create('div', [], {
       style: {
-        'color': '#999',
+        'color': 'var(--w-sub)',
         'font-size': '80%',
         'font-weight': 'normal',
         'margin-left': '0.5em',
       },
-      html: info.join('&nbsp;|&nbsp;'),
+      html: info.join(SPLITTEER),
     }));
   }
 });
