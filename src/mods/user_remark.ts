@@ -1,4 +1,4 @@
-import { $, $$, $OR, bind, create, html, observe } from '../utils/dom';
+import { $, $$, append, attrs, create, html, observe } from '../utils/dom';
 import { IVNodeContext, VueHTMLElement } from '../utils/vue';
 
 interface IUserInfo {
@@ -14,7 +14,7 @@ interface IUserInfo {
   screen_name: string;
 }
 
-interface IStatusItem {
+interface IStatusContext {
   id: string;
   region_name: string;
   source: string;
@@ -24,43 +24,36 @@ interface IStatusItem {
 }
 
 observe(document.body, function userRemark(): void {
-  const headNicks = $$<VueHTMLElement<IVNodeContext<IStatusItem>>>(document, '.head_nick_1yix2');
+  const headNicks = $$<VueHTMLElement<IVNodeContext<IStatusContext>>>(document, '.head_nick_1yix2:not([awsl-infobox="yes"])');
   for (const container of headNicks) {
+    attrs(container, { 'awsl-infobox': 'yes' });
+
     const context = container.__vue__?.$vnode.context
     if (!context) continue;
 
     const headName = $(container, '.head_name_24eEB > span');
     if (!headName) continue;
+    html(headName, context.userInfo.screen_name);
 
-    const infoBox = $OR(container, '.awsl-infobox', () => create('div', [
-      'awsl-infobox',
-    ], {
+    const info: string[] = [];
+    if (context.userInfo.remark) {
+      info.push(`备注：${context.userInfo.remark}`);
+    }
+    if (context.userInfo.follow_me && context.userInfo.following) {
+      info.push('互相关注');
+    }
+    if (context.region_name) {
+      info.push(context.region_name);
+    }
+
+    append(container, () => create('div', [], {
       style: {
         'color': '#999',
         'font-size': '80%',
         'font-weight': 'normal',
         'margin-left': '0.5em',
       },
+      html: info.join('&nbsp;|&nbsp;'),
     }));
-
-    bind(container, 'awsl-infobox-id', context.id, () => {
-      html(headName, context.userInfo.screen_name);
-
-      const info: string[] = [];
-
-      if (context.userInfo.remark) {
-        info.push(`备注：${context.userInfo.remark}`);
-      }
-
-      if (context.userInfo.follow_me && context.userInfo.following) {
-        info.push('互相关注');
-      }
-
-      if (context.region_name) {
-        info.push(context.region_name);
-      }
-
-      html(infoBox, info.join('&nbsp;|&nbsp;'));
-    });
   }
 });
