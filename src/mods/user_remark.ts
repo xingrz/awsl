@@ -1,5 +1,5 @@
 import { $, $$, $OR, bind, create, html, observe } from '../utils/dom';
-import { INode, VueHTMLElement } from '../utils/vue';
+import { IVNodeContext, VueHTMLElement } from '../utils/vue';
 
 interface IUserInfo {
   avatar_hd: string;
@@ -24,7 +24,7 @@ interface IStatusItem {
 }
 
 observe(document.body, function userRemark(): void {
-  const headNicks = $$<VueHTMLElement<INode<IStatusItem>>>(document, '.head_nick_1yix2');
+  const headNicks = $$<VueHTMLElement<IVNodeContext<IStatusItem>>>(document, '.head_nick_1yix2');
   for (const container of headNicks) {
     const context = container.__vue__?.$vnode.context
     if (!context) continue;

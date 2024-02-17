@@ -1,8 +1,34 @@
 import { $, attrs, observe, on } from '../utils/dom';
-import { IApp, VueHTMLElement } from '../utils/vue';
+import { IStoreState, VueHTMLElement } from '../utils/vue';
+
+interface IApp {
+  config?: {
+    uid: number;
+  }
+}
+
+interface IFeedGroup {
+  api: string;
+  apipath: string;
+  count: number;
+  frequency: number;
+  gid: string;
+  icon: string;
+  name: string;
+  title: string;
+  type: string;
+  uid: string;
+}
+
+interface IFeed {
+  feedGroup: {
+    left?: IFeedGroup[];
+    custom?: IFeedGroup[];
+  };
+}
 
 observe(document.body, function logoClick(): void {
-  const app = $<VueHTMLElement<IApp>>(document, '#app:not([awsl-logoclick="yes"])');
+  const app = $<VueHTMLElement<IApp & IStoreState<{ 'feed': IFeed }>>>(document, '#app:not([awsl-logoclick="yes"])');
   if (!app) return;
   attrs(app, { 'awsl-logoclick': 'yes' });
 
