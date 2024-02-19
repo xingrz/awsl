@@ -315,7 +315,7 @@ function toggleEdit(ctx: IComposeBar, editBtn: HTMLElement): void {
       }));
       items.push(wrap);
 
-      const checkbox = append(wrap, () => create<HTMLInputElement>('input', [], {
+      append(wrap, () => create('input', [], {
         style: {
           'width': 'auto',
           'margin': '6px 0',
@@ -324,11 +324,13 @@ function toggleEdit(ctx: IComposeBar, editBtn: HTMLElement): void {
           'type': 'checkbox',
           'checked': 'yes',
         },
+        events: {
+          change: (e) => {
+            attrs(wrap, { 'data-awsl-removed': (e.target as HTMLInputElement).checked ? 'no' : 'yes' });
+            updateTextarea();
+          },
+        },
       }));
-      on(checkbox, 'change', () => {
-        attrs(wrap, { 'data-awsl-removed': checkbox.checked ? 'no' : 'yes' });
-        updateTextarea();
-      });
 
       const nameHtml = name
         ? `<span style="color: var(--w-alink)">${name}</span>: `

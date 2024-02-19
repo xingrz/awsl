@@ -78,13 +78,14 @@ function expand(container: HTMLElement, context: IVueApp & IPictureBox): void {
 
     const img = create('img', ['picture_focusImg_1z5In'], {
       attrs: { 'src': pic.url },
+      events: {
+        click: (e) => context.$emit('picture-tap', {
+          index: 9 + idx,
+          pics: context.pics,
+          content: context.$attrs.content,
+        }, e, e.target),
+      },
     });
-
-    on(img, 'click', (ev) => context.$emit('picture-tap', {
-      index: 9 + idx,
-      pics: context.pics,
-      content: context.$attrs.content,
-    }, ev, img));
 
     // TODO
     // if (pic.focus_point) {

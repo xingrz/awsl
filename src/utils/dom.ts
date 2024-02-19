@@ -16,10 +16,13 @@ export function $H<T = Record<string, HTMLElement>>(parent: ParentNode, selector
   return elements as unknown as T;
 }
 
-export function on<K extends keyof HTMLElementEventMap>(
+type HTMLElementEventName = keyof HTMLElementEventMap;
+type HTMLElementEventListener<T extends HTMLElementEventName> = (this: HTMLElement, ev: HTMLElementEventMap[T]) => any;
+
+export function on<K extends HTMLElementEventName>(
   element: HTMLElement,
   type: K,
-  listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any): HTMLElement {
+  listener: HTMLElementEventListener<K>): HTMLElement {
   element.addEventListener(type, listener, false);
   return element;
 }
@@ -42,6 +45,9 @@ export type ICreator<T extends HTMLElement> = (parent: HTMLElement) => T;
 export function create<T extends HTMLElement>(tag: string, classes: string[] = [], config: {
   attrs?: Record<string, string>;
   style?: Record<string, string>;
+  events?: Partial<{
+    [key in HTMLElementEventName]: HTMLElementEventListener<key>;
+  }>;
   html?: string;
 } = {}, children: ICreator<HTMLElement>[] = []): T {
   const element = document.createElement(tag) as T;
@@ -49,6 +55,13 @@ export function create<T extends HTMLElement>(tag: string, classes: string[] = [
   if (config.attrs) attrs(element, config.attrs);
   if (config.style) style(element, config.style);
   if (config.html) html(element, config.html);
+  if (config.events) {
+    for (const key in config.events) {
+      const name = key as HTMLElementEventName;
+      const listener = config.events[name] as HTMLElementEventListener<HTMLElementEventName>;
+      on(element, name, listener);
+    }
+  }
   for (const creator of children) {
     append(element, creator);
   }
