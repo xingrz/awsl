@@ -1,5 +1,5 @@
 import { $, $$, $H, append, attrs, create, html, insertBefore, observe } from '../utils/dom';
-import { IVNodeContext, VueHTMLElement } from '../utils/vue';
+import { VueHTMLElement, WithVNode, WithVNodeContext } from '../utils/vue';
 
 interface IUserInfo {
   avatar_hd: string;
@@ -34,8 +34,8 @@ interface IRetweetContext {
   };
 }
 
-type IStatusElement = VueHTMLElement<IVNodeContext<IStatusContext>>;
-type IRetweetElement = VueHTMLElement<IVNodeContext<IRetweetContext>>;
+type IStatusElement = VueHTMLElement<WithVNode<WithVNodeContext<IStatusContext>>>;
+type IRetweetElement = VueHTMLElement<WithVNode<WithVNodeContext<IRetweetContext>>>;
 
 const SPLITTEER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
 

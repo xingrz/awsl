@@ -1,5 +1,5 @@
 import { $, attrs, observe, on } from '../utils/dom';
-import { IStoreState, VueHTMLElement } from '../utils/vue';
+import { VueHTMLElement, WithStore } from '../utils/vue';
 
 interface IApp {
   config?: {
@@ -27,8 +27,10 @@ interface IFeed {
   };
 }
 
+type IAppElement = VueHTMLElement<IApp & WithStore<'feed', IFeed>>;
+
 observe(document.body, function logoClick(): void {
-  const app = $<VueHTMLElement<IApp & IStoreState<{ 'feed': IFeed }>>>(document, '#app:not([awsl-logoclick="yes"])');
+  const app = $<IAppElement>(document, '#app:not([awsl-logoclick="yes"])');
   if (!app) return;
   attrs(app, { 'awsl-logoclick': 'yes' });
 

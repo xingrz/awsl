@@ -1,10 +1,7 @@
 import { $, $$, append, attrs, create, observe, on, style } from '../utils/dom';
-import { IVNodeContext, IVueApp, VueHTMLElement } from '../utils/vue';
+import { IVueApp, VueHTMLElement, WithVNode, WithVNodeContext } from '../utils/vue';
 
 interface IPictureBox {
-  $attrs: {
-    content: unknown;
-  };
   pic_num: number;
   pics: {
     focus_point: undefined | {
@@ -23,8 +20,10 @@ interface IPictureBox {
   }[];
 }
 
+type IPictureBoxElement = VueHTMLElement<IVueApp & WithVNode<WithVNodeContext<IPictureBox>>>;
+
 observe(document.body, function expandPics(): void {
-  const containers = $$<VueHTMLElement<IVNodeContext<IPictureBox>>>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
+  const containers = $$<IPictureBoxElement>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
   for (const container of containers) {
     attrs(container, { 'awsl-picbox': 'yes' });
 
