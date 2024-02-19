@@ -52,17 +52,24 @@ function setupButtons(ctx: IComposeBar): HTMLElement {
       'gap': '4px 8px',
       'margin-top': '8px',
     },
+    events: {
+      click: (e) => {
+        const word = attr(e.target as HTMLElement, 'data-awsl-word');
+        if (word) {
+          e.stopPropagation();
+          ctx.textarea.value = word + ctx.textarea.value;
+          ctx.textarea.dispatchEvent(new Event('input'));
+          setTimeout(() => {
+            ctx.submit.click();
+          }, 200);
+        }
+      },
+    },
   }));
 
   for (const word of words) {
     const button = append(buttons, () => createButton(word));
-    on(button, 'click', () => {
-      ctx.textarea.value = word + ctx.textarea.value;
-      ctx.textarea.dispatchEvent(new Event('input'));
-      setTimeout(() => {
-        ctx.submit.click();
-      }, 200);
-    });
+    attrs(button, { 'data-awsl-word': word });
   }
 
   return buttons;
@@ -183,13 +190,53 @@ function showCustom(ctx: IComposeBar): void {
     });
   }
 
-  let currentWords = [...words];
+  const currentWords = [...words];
+
+  const add = append(container, () => {
+    const wrap = createItemWrap();
+
+    const input = append(wrap, () => create<HTMLInputElement>('input', [], {
+      style: {
+        'padding': '4px 8px',
+        'color': 'var(--w-main)',
+        'font-size': '13px',
+        'border': 'none',
+        'outline': 'none',
+        'background': 'none',
+      },
+      attrs: { placeholder: '添加短语' },
+    }));
+
+    const btn = append(wrap, () => createIconBtn('添加', 'check'));
+    on(btn, 'click', () => {
+      const value = input.value.trim();
+      if (value) {
+        currentWords.push(value);
+        input.value = '';
+        fillWords();
+      }
+    });
+
+    return wrap;
+  });
+
+  on(container, 'click', (e) => {
+    if ((e.target as HTMLElement).matches('[data-awsl-word-index]')) {
+      e.stopPropagation();
+      const index = Number(attr(e.target as HTMLElement, 'data-awsl-word-index'));
+      currentWords.splice(index, 1);
+      fillWords();
+    }
+  });
 
   function fillWords() {
-    container.innerHTML = '';
+    for (const el of $$(container, '[data-awsl-word]')) {
+      el.remove();
+    }
 
-    for (const word of currentWords) {
-      const wrap = append(container, () => createItemWrap());
+    for (const [index, word] of currentWords.entries()) {
+      const wrap = insertBefore(container, add, () => createItemWrap());
+      attrs(wrap, { 'data-awsl-word': word });
 
       append(wrap, () => create('span', [], {
         style: {
@@ -199,36 +246,7 @@ function showCustom(ctx: IComposeBar): void {
       }));
 
       const del = append(wrap, () => createIconBtn('删除', 'cross'));
-      on(del, 'click', () => {
-        currentWords = currentWords.filter(t => t != word);
-        fillWords();
-      });
-    }
-
-    {
-      const wrap = append(container, () => createItemWrap());
-
-      const input = append(wrap, () => create<HTMLInputElement>('input', [], {
-        style: {
-          'padding': '4px 8px',
-          'color': 'var(--w-main)',
-          'font-size': '13px',
-          'border': 'none',
-          'outline': 'none',
-          'background': 'none',
-        },
-        attrs: { placeholder: '添加短语' },
-      }));
-
-      const add = append(wrap, () => createIconBtn('添加', 'check'));
-      on(add, 'click', () => {
-        const value = input.value.trim();
-        if (value) {
-          currentWords.push(value);
-          input.value = '';
-          fillWords();
-        }
-      });
+      attrs(del, { 'data-awsl-word-index': String(index) });
     }
   }
 
