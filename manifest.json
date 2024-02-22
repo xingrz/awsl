@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AWSL",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Auto AWSLing",
   "permissions": [
     "storage"
@@ -9,7 +9,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://weibo.com/*"
+        "https://*.weibo.com/*"
       ],
       "js": [
         "awsl.user.js"

@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.4.0
+// @version      2.5.0
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
-// @match        https://weibo.com/*
+// @match        https://*.weibo.com/*
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @updateURL    https://raw.githubusercontent.com/xingrz/awsl/master/awsl.meta.js
