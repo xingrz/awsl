@@ -9,7 +9,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://weibo.com/*"
+        "https://*.weibo.com/*"
       ],
       "js": [
         "awsl.user.js"
