@@ -29,7 +29,7 @@ export function on<K extends HTMLElementEventName>(
 
 export function style(element: HTMLElement, style: Record<string, string>): HTMLElement {
   for (const key in style) {
-    element.style.setProperty(key, style[key]);
+    element.style.setProperty(key, style[key] ?? null);
   }
   return element;
 }

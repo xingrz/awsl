@@ -1,14 +1,34 @@
 {
+  "extends": [
+    "@tsconfig/strictest/tsconfig",
+  ],
   "compilerOptions": {
-    "module": "esnext",
-    "target": "esnext",
-    "strict": true,
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "noPropertyAccessFromIndexSignature": false,
+    "types": [
+      "chrome",
+      "tampermonkey",
+    ],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext",
+    ],
+    "paths": {
+      "vuex": [
+        "./node_modules/vuex/types/index.d.ts"
+      ],
+    },
   },
   "include": [
     "src/**/*.ts",
   ],
   "exclude": [
-    "node_modules"
-  ]
+    "node_modules",
+  ],
 }

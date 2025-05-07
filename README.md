@@ -33,7 +33,7 @@ AWSL
     // ==UserScript==
     // @name         AWSL (debug)
     // @version      debug
-    // @match        https://weibo.com/*
+    // @match        https://*.weibo.com/*
     // @grant        GM.getValue
     // @grant        GM.setValue
     // @require      file:///path/to/xingrz/awsl/dist/awsl.user.js
