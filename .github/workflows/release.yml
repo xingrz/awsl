@@ -2,37 +2,38 @@ name: Auto release
 
 on:
   push:
-    tags: [ 'v*' ]
+    tags: ['v*']
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v6
         with:
-          node-version: '16'
+          node-version: 24
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
 
-      - uses: benjlevesque/short-sha@v1.2
+      - uses: benjlevesque/short-sha@v3.0
         id: short-sha
 
       - name: Publish
-        uses: crazy-max/ghaction-github-pages@v2
+        uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: master
           keep_history: true
           allow_empty_commit: false
           build_dir: dist
-          commit_message: "Auto publish from commit ${{ steps.short-sha.outputs.sha }}"
+          commit_message: 'Auto publish from commit ${{ steps.short-sha.outputs.sha }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
