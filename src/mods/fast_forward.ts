@@ -1,6 +1,7 @@
-import { getValue, setValue } from '../utils/kv';
-import { $, $$, $H, ICreator, append, attr, attrs, bind, create, html, insertBefore, observe, on, style } from '../utils/dom';
-import { createButton, createModal } from '../utils/weibo';
+import { registerModule } from '@/module';
+import { getValue, setValue } from '@/utils/kv';
+import { $, $$, $H, ICreator, append, attr, attrs, bind, create, html, insertBefore, on, style } from '@/utils/dom';
+import { createButton, createModal } from '@/utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
 
@@ -15,30 +16,35 @@ interface IComposeBar {
   composer: HTMLElement;
 }
 
-observe(document.body, function fastForward(): void {
-  const composers = $$(document, '.Composer_mar1_ujs0j');
-  for (const composer of composers) {
-    const ctx = $H<IComposeBar>(composer.parentElement!, {
-      textarea: '.Form_input_3JT2Q',
-      submit: '.Composer_btn_2XFOD',
-      composer: '.Composer_mar1_ujs0j',
-    });
-    if (!ctx) continue;
-
-    const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
-    const isForward = !!visibleLimits;
-
-    if (isForward) {
-      bind(ctx.composer, 'awsl-fastforward', '1', () => {
-        setupButtons(ctx);
-        setupMenus(ctx, visibleLimits);
+registerModule({
+  id: 'fast_forward',
+  name: '一键转发短语',
+  defaultEnabled: true,
+  init() {
+    const composers = $$(document, '.Composer_mar1_ujs0j');
+    for (const composer of composers) {
+      const ctx = $H<IComposeBar>(composer.parentElement!, {
+        textarea: '.Form_input_3JT2Q',
+        submit: '.Composer_btn_2XFOD',
+        composer: '.Composer_mar1_ujs0j',
       });
-    } else {
-      attrs(ctx.composer, { 'awsl-fastforward': null });
-      destroyButtons(ctx);
-      destroyMenus(ctx);
+      if (!ctx) continue;
+
+      const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
+      const isForward = !!visibleLimits;
+
+      if (isForward) {
+        bind(ctx.composer, 'awsl-fastforward', '1', () => {
+          setupButtons(ctx);
+          setupMenus(ctx, visibleLimits);
+        });
+      } else {
+        attrs(ctx.composer, { 'awsl-fastforward': null });
+        destroyButtons(ctx);
+        destroyMenus(ctx);
+      }
     }
-  }
+  },
 });
 
 function setupButtons(ctx: IComposeBar): HTMLElement {
@@ -315,7 +321,7 @@ function toggleEdit(ctx: IComposeBar, editBtn: HTMLElement): void {
     }
 
     for (const item of others) {
-      const [_match, _prefix, name, text] = item.match(/^(([^\:]+)\:)?(.*)$/) || [];
+      const [_match, _prefix, name, text] = item.match(/^(([^:]+):)?(.*)$/) || [];
 
       const wrap = append(editor, () => create('label', [
         'woo-box-flex',
@@ -367,9 +373,9 @@ function toggleEdit(ctx: IComposeBar, editBtn: HTMLElement): void {
 }
 
 function escapeLinks(value: string): string {
-  return value.replace(/(http|https)\:\/\//g, '$1:$$$$');
+  return value.replace(/(http|https):\/\//g, '$1:$$$$');
 }
 
 function unescapeLinks(value: string): string {
-  return value.replace(/(http|https)\:\$\$/g, '$1://');
+  return value.replace(/(http|https):\$\$/g, '$1://');
 }

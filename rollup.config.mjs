@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import banner2 from 'rollup-plugin-banner2';
 import { mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf-8'));
 
@@ -29,6 +29,11 @@ export default {
   output: {
     file: 'dist/awsl.user.js',
     format: 'es',
+  },
+  resolve: {
+    alias: {
+      '@': resolve('./src'),
+    },
   },
   plugins: [
     typescript(),

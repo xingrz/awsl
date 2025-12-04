@@ -1,5 +1,6 @@
-import { $, $$, append, attrs, create, observe, on, style } from '../utils/dom';
-import { IVueApp, VueHTMLElement, WithVNode, WithVNodeContext } from '../utils/vue';
+import { registerModule } from '@/module';
+import { $, $$, append, attrs, create, on, style } from '@/utils/dom';
+import { IVueApp, VueHTMLElement, WithVNode, WithVNodeContext } from '@/utils/vue';
 
 interface IPictureBox {
   pic_num: number;
@@ -22,34 +23,39 @@ interface IPictureBox {
 
 type IPictureBoxElement = VueHTMLElement<IVueApp & WithVNode<WithVNodeContext<IPictureBox>>>;
 
-observe(document.body, function expandPics(): void {
-  const containers = $$<IPictureBoxElement>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
-  for (const container of containers) {
-    attrs(container, { 'awsl-picbox': 'yes' });
+registerModule({
+  id: 'expand_pics',
+  name: '自动展开超过9张的图片',
+  defaultEnabled: true,
+  init() {
+    const containers = $$<IPictureBoxElement>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
+    for (const container of containers) {
+      attrs(container, { 'awsl-picbox': 'yes' });
 
-    const vue = container.__vue__;
-    const context = vue?.$vnode.context;
-    if (!context) {
-      continue;
+      const vue = container.__vue__;
+      const context = vue?.$vnode.context;
+      if (!context) {
+        continue;
+      }
+
+      const mask = $(container, '.picture_mask_20G3v');
+      if (mask) {
+        on(mask, 'mouseenter', () => {
+          style(mask, { 'display': 'none' });
+          expand(container, context);
+          window.dispatchEvent(new Event('resize'));  // Force page relayout
+        });
+
+        on(container, 'mouseleave', () => {
+          style(mask, { 'display': '' });
+          for (const item of $$(container, '.awsl-picbox-item')) {
+            item.remove();
+          }
+          window.dispatchEvent(new Event('resize'));  // Force page relayout
+        });
+      }
     }
-
-    const mask = $(container, '.picture_mask_20G3v');
-    if (mask) {
-      on(mask, 'mouseenter', () => {
-        style(mask, { 'display': 'none' });
-        expand(container, context);
-        window.dispatchEvent(new Event('resize'));  // Force page relayout
-      });
-
-      on(container, 'mouseleave', () => {
-        style(mask, { 'display': '' });
-        for (const item of $$(container, '.awsl-picbox-item')) {
-          item.remove();
-        }
-        window.dispatchEvent(new Event('resize'));  // Force page relayout
-      });
-    }
-  }
+  },
 });
 
 function expand(container: HTMLElement, context: IVueApp & IPictureBox): void {
