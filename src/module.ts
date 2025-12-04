@@ -46,6 +46,7 @@ export async function enableModule(id: string): Promise<void> {
   if (record && !record.observer) {
     record.observer = observe(document.body, record.module.init);
     await setValue(`moduleEnabled:${id}`, true);
+    console.log('[AWSL] Enabled module:', id);
   }
 }
 
@@ -53,7 +54,9 @@ export async function disableModule(id: string): Promise<void> {
   const record = modules.get(id);
   if (record && record.observer) {
     record.observer.disconnect();
+    delete record.observer;
     record.module.cleanup?.();
     await setValue(`moduleEnabled:${id}`, false);
+    console.log('[AWSL] Disabled module:', id);
   }
 }

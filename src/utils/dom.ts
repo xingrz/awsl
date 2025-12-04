@@ -43,7 +43,7 @@ export function toggle(element: HTMLElement, property: string, on: string, off: 
 export type ICreator<T extends HTMLElement> = (parent: HTMLElement) => T;
 
 export function create<T extends HTMLElement>(tag: string, classes: string[] = [], config: {
-  attrs?: Record<string, string>;
+  attrs?: Record<string, string | null>;
   style?: Record<string, string>;
   events?: Partial<{
     [key in HTMLElementEventName]: HTMLElementEventListener<key>;
