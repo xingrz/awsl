@@ -44,6 +44,30 @@ registerModule({
         destroyMenus(ctx);
       }
     }
+
+    const composers2 = $$(document, '[composerconfig]');
+    for (const composer of composers2) {
+      const ctx = $H<IComposeBar>(composer.parentElement!, {
+        textarea: '._input_1fox3_8',
+        submit: '.woo-button-primary',
+        composer: '.woo-box-item-flex ._mar1_1n75r_2',
+      });
+      if (!ctx) continue;
+
+      const visibleLimits = $(ctx.composer, '._limits_1oo0f_2');
+      const isForward = !!visibleLimits;
+
+      if (isForward) {
+        bind(ctx.composer, 'awsl-fastforward', '1', () => {
+          setupButtons(ctx);
+          setupMenus(ctx, visibleLimits);
+        });
+      } else {
+        attrs(ctx.composer, { 'awsl-fastforward': null });
+        destroyButtons(ctx);
+        destroyMenus(ctx);
+      }
+    }
   },
 });
 
