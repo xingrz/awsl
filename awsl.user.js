@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.6.0
+// @version      2.6.1
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -366,6 +366,29 @@ registerModule({
             if (!ctx)
                 continue;
             const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
+            const isForward = !!visibleLimits;
+            if (isForward) {
+                bind(ctx.composer, 'awsl-fastforward', '1', () => {
+                    setupButtons(ctx);
+                    setupMenus(ctx, visibleLimits);
+                });
+            }
+            else {
+                attrs(ctx.composer, { 'awsl-fastforward': null });
+                destroyButtons(ctx);
+                destroyMenus(ctx);
+            }
+        }
+        const composers2 = $$(document, '[composerconfig]');
+        for (const composer of composers2) {
+            const ctx = $H(composer.parentElement, {
+                textarea: '._input_1fox3_8',
+                submit: '.woo-button-primary',
+                composer: '.woo-box-item-flex ._mar1_1n75r_2',
+            });
+            if (!ctx)
+                continue;
+            const visibleLimits = $(ctx.composer, '._limits_1oo0f_2');
             const isForward = !!visibleLimits;
             if (isForward) {
                 bind(ctx.composer, 'awsl-fastforward', '1', () => {
