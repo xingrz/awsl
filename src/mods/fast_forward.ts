@@ -21,32 +21,8 @@ registerModule({
   name: '一键转发短语',
   defaultEnabled: true,
   init() {
-    const composers = $$(document, '.Composer_mar1_ujs0j');
+    const composers = $$(document, '[composerconfig]');
     for (const composer of composers) {
-      const ctx = $H<IComposeBar>(composer.parentElement!, {
-        textarea: '.Form_input_3JT2Q',
-        submit: '.Composer_btn_2XFOD',
-        composer: '.Composer_mar1_ujs0j',
-      });
-      if (!ctx) continue;
-
-      const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
-      const isForward = !!visibleLimits;
-
-      if (isForward) {
-        bind(ctx.composer, 'awsl-fastforward', '1', () => {
-          setupButtons(ctx);
-          setupMenus(ctx, visibleLimits);
-        });
-      } else {
-        attrs(ctx.composer, { 'awsl-fastforward': null });
-        destroyButtons(ctx);
-        destroyMenus(ctx);
-      }
-    }
-
-    const composers2 = $$(document, '[composerconfig]');
-    for (const composer of composers2) {
       const ctx = $H<IComposeBar>(composer.parentElement!, {
         textarea: '._input_1fox3_8',
         submit: '.woo-button-primary',
