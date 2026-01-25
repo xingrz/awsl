@@ -25,7 +25,7 @@ function handlePrefersColorSchemeChange(e: MediaQueryListEvent): void {
 }
 
 function applyPreferredDarkMode(preferred: boolean): void {
-  const themeButton = $(document.body, '.Dark_box_2i4rW button');
+  const themeButton = $(document.body, '._popcon_18dhr_163 ._box_1chqx_2 button[displaymode]');
   const currentMode = attr(document.documentElement, 'data-theme');
   if (themeButton && (preferred != (currentMode === 'dark'))) {
     themeButton.click();
