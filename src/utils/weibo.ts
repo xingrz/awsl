@@ -1,5 +1,42 @@
 import { $, ICreator, append, create, on } from './dom';
 
+export interface IUserInfo {
+  avatar_hd: string;
+  avatar_large: string;
+  cover_image_phone: string;
+  description: string;
+  domain: string;
+  follow_me: boolean;
+  followers_count: number;
+  followers_count_str: string;
+  following: boolean;
+  friends_count: number;
+  gender: string;
+  id: number;
+  idstr: string;
+  location: string;
+  profile_image_url: string;
+  profile_url: string;
+  screen_name: string;
+  status_total_counter: {
+    comment_cnt: string;
+    like_cnt: string;
+    repost_cnt: string;
+    total_cnt: string;
+    total_cnt_format: string;
+  };
+  statuses_count: number;
+  svip: number;
+  type: number;
+  url: string;
+  user_ability: number;
+  user_limit: number;
+  verified: boolean;
+  verified_reason: string;
+  verified_type: number;
+  verified_type_ext: number;
+};
+
 export function createButton(text: string, type = 'default', classes: string[] = []): HTMLElement {
   return create('button', [
     ...classes,
