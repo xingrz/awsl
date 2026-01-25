@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.6.1
+// @version      2.7.0-alpha.2
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -195,7 +195,7 @@ function handlePrefersColorSchemeChange(e) {
     applyPreferredDarkMode(e.matches);
 }
 function applyPreferredDarkMode(preferred) {
-    const themeButton = $(document.body, '.Dark_box_2i4rW button');
+    const themeButton = $(document.body, '._popcon_18dhr_163 ._box_1chqx_2 button[displaymode]');
     const currentMode = attr(document.documentElement, 'data-theme');
     if (themeButton && (preferred != (currentMode === 'dark'))) {
         themeButton.click();
@@ -356,31 +356,8 @@ registerModule({
     name: '一键转发短语',
     defaultEnabled: true,
     init() {
-        const composers = $$(document, '.Composer_mar1_ujs0j');
+        const composers = $$(document, '[composerconfig]');
         for (const composer of composers) {
-            const ctx = $H(composer.parentElement, {
-                textarea: '.Form_input_3JT2Q',
-                submit: '.Composer_btn_2XFOD',
-                composer: '.Composer_mar1_ujs0j',
-            });
-            if (!ctx)
-                continue;
-            const visibleLimits = $(ctx.composer, '.Visible_limits_11OKi');
-            const isForward = !!visibleLimits;
-            if (isForward) {
-                bind(ctx.composer, 'awsl-fastforward', '1', () => {
-                    setupButtons(ctx);
-                    setupMenus(ctx, visibleLimits);
-                });
-            }
-            else {
-                attrs(ctx.composer, { 'awsl-fastforward': null });
-                destroyButtons(ctx);
-                destroyMenus(ctx);
-            }
-        }
-        const composers2 = $$(document, '[composerconfig]');
-        for (const composer of composers2) {
             const ctx = $H(composer.parentElement, {
                 textarea: '._input_1fox3_8',
                 submit: '.woo-button-primary',
@@ -725,27 +702,6 @@ registerModule({
             }
         });
     }
-});
-
-observe(document.body, function removeAds() {
-    const ads = $$(document, '.TipsAd_wrap_3QB_0');
-    for (const ad of ads) {
-        ad.remove();
-    }
-});
-
-observe(document.body, function removePromotion() {
-    const feed = $(document, '.Home_feed_3o7ry:not([awsl-remove-promotion="yes"])');
-    if (!feed || !feed.__vue__)
-        return;
-    attrs(feed, { 'awsl-remove-promotion': 'yes' });
-    const vue = feed.__vue__;
-    vue.$watch('data', (data) => {
-        const hasPromotion = data.find((item) => item.promotion);
-        if (hasPromotion) {
-            vue.$set(vue, 'data', data.filter((item) => !item.promotion));
-        }
-    });
 });
 
 observe(document.body, function settings() {
