@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.8.0
+// @version      2.8.1
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -32,6 +32,7 @@ function loadModules() {
 
 const initHandlers = [];
 const mountedHandlers = new Map();
+const updatedHandlers = new Map();
 function onInit(handler) {
     initHandlers.push(handler);
 }
@@ -39,6 +40,11 @@ function onMounted(name, handler) {
     const handlers = mountedHandlers.get(name) ?? [];
     handlers.push(handler);
     mountedHandlers.set(name, handlers);
+}
+function onUpdated(name, handler) {
+    const handlers = updatedHandlers.get(name) ?? [];
+    handlers.push(handler);
+    updatedHandlers.set(name, handlers);
 }
 function dispatchInit(app) {
     for (const handler of initHandlers) {
@@ -56,12 +62,33 @@ function dispatchMounted(instance, app) {
         }
     }
 }
+function dispatchUpdated(instance, app) {
+    const name = instance.type.name;
+    if (!name)
+        return;
+    const handlers = updatedHandlers.get(name);
+    if (handlers) {
+        for (const handler of handlers) {
+            handler(instance, app);
+        }
+    }
+}
 
 function $(parent, selecor) {
     return parent.querySelector(selecor);
 }
 function $$(parent, selecor) {
     return parent.querySelectorAll(selecor);
+}
+function $H(parent, selectors) {
+    const elements = {};
+    for (const key in selectors) {
+        const el = $(parent, selectors[key]);
+        if (el == null)
+            return null;
+        elements[key] = el;
+    }
+    return elements;
 }
 function on(element, type, listener) {
     element.addEventListener(type, listener, false);
@@ -328,31 +355,26 @@ registerModule({
         getValue('words', DEFAULT_WORDS).then(v => {
             words = v.split(';').filter(t => !!t);
         });
-        onInit(() => {
-            observe(document.body, () => {
-                const composers = $$(document, '[class*="_mar1_1n75r"]');
-                for (const composer of composers) {
-                    const container = composer.closest('[class*="_box_m3n8j"]');
-                    if (!container)
-                        continue;
-                    const textarea = $(container, 'textarea[class*="_input_1fox3"]');
-                    const submit = $(container, '.woo-button-primary');
-                    if (!textarea || !submit)
-                        continue;
-                    const visibleLimits = $(composer, '[class*="_limits_"]');
-                    if (!visibleLimits) {
-                        // Not a forward composer, clean up if needed
-                        destroyButtons({ composer });
-                        destroyMenus(composer);
-                        continue;
-                    }
-                    // Already set up
-                    if ($(composer, '.awsl-fastforward'))
-                        continue;
-                    setupButtons({ textarea, submit, composer });
-                    setupMenus({ textarea, submit, composer }, visibleLimits);
-                }
+        onUpdated('Composer', (instance) => {
+            const composer = instance.vnode.el;
+            if (!composer)
+                return;
+            const ctx = $H(composer, {
+                textarea: 'textarea[class*="_input_"]',
+                submit: 'button.woo-button-primary',
             });
+            if (!ctx)
+                return;
+            const visibleLimits = $(composer, '[class*="_limits_"]');
+            const alreadySetup = $(composer, '.awsl-fastforward');
+            if (!visibleLimits) {
+                destroyButtons({ ...ctx, composer });
+                destroyMenus({ ...ctx, composer });
+            }
+            else if (!alreadySetup) {
+                setupButtons({ ...ctx, composer });
+                setupMenus({ ...ctx, composer }, visibleLimits);
+            }
         });
     },
 });
@@ -392,11 +414,6 @@ function destroyButtons(ctx) {
         el.remove();
     }
 }
-function destroyMenus(composer) {
-    for (const el of $$(composer, '.awsl-fastforward-menu')) {
-        el.remove();
-    }
-}
 function setupMenus(ctx, visibleLimits) {
     function insertMenu(text) {
         const menu = create('span', [], {
@@ -426,6 +443,11 @@ function setupMenus(ctx, visibleLimits) {
     }
     const custom = insertMenu('自定义');
     on(custom, 'click', () => showCustom(ctx));
+}
+function destroyMenus(ctx) {
+    for (const el of $$(ctx.composer, '.awsl-fastforward-menu')) {
+        el.remove();
+    }
 }
 function createModalWithButtons(title, content, cancelText, okText, onOk) {
     return createModal(title, (modal) => [
@@ -711,17 +733,22 @@ registerModule({
     },
 });
 
-observe(document.body, () => {
+observe(document.body, (_, observer) => {
     const root = $(document, '[data-v-app]:not([awsl-root="yes"])');
     if (!root)
         return;
     attrs(root, { 'awsl-root': 'yes' });
+    observer.disconnect();
     console.log('[AWSL] Vue app found, installing mixin');
     const vue = root.__vue_app__;
     vue.mixin({
         mounted() {
             const instance = this._;
             dispatchMounted(instance, vue);
+        },
+        updated() {
+            const instance = this._;
+            dispatchUpdated(instance, vue);
         },
     });
     dispatchInit(vue);
