@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.7.0-alpha.2
+// @version      2.8.0
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -13,21 +13,55 @@
 // @homepageURL  https://github.com/xingrz/awsl
 // @supportURL   https://github.com/xingrz/awsl/issues
 // ==/UserScript==
+const modules = new Map();
+function registerModule(module) {
+    modules.set(module.id, { module });
+    console.log('[AWSL] Registered module:', module.id);
+}
+function isModuleEnabled(_module) {
+    return true; // enable all for now
+}
+function loadModules() {
+    for (const record of modules.values()) {
+        if (isModuleEnabled(record.module)) {
+            record.module.setup();
+            console.log('[AWSL] Loaded module:', record.module.id);
+        }
+    }
+}
+
+const initHandlers = [];
+const mountedHandlers = new Map();
+function onInit(handler) {
+    initHandlers.push(handler);
+}
+function onMounted(name, handler) {
+    const handlers = mountedHandlers.get(name) ?? [];
+    handlers.push(handler);
+    mountedHandlers.set(name, handlers);
+}
+function dispatchInit(app) {
+    for (const handler of initHandlers) {
+        handler(app);
+    }
+}
+function dispatchMounted(instance, app) {
+    const name = instance.type.name;
+    if (!name)
+        return;
+    const handlers = mountedHandlers.get(name);
+    if (handlers) {
+        for (const handler of handlers) {
+            handler(instance, app);
+        }
+    }
+}
+
 function $(parent, selecor) {
     return parent.querySelector(selecor);
 }
 function $$(parent, selecor) {
     return parent.querySelectorAll(selecor);
-}
-function $H(parent, selectors) {
-    const elements = {};
-    for (const key in selectors) {
-        const el = $(parent, selectors[key]);
-        if (el == null)
-            return null;
-        elements[key] = el;
-    }
-    return elements;
 }
 function on(element, type, listener) {
     element.addEventListener(type, listener, false);
@@ -98,13 +132,112 @@ function observe(element, callback) {
 function classNames(names) {
     return names.join(' ');
 }
-function bind(element, attrName, value, updater) {
-    const cache = attr(element, attrName);
-    if (cache != value) {
-        attrs(element, { [attrName]: value });
-        updater();
+
+registerModule({
+    id: 'auto_dark_mode',
+    name: '跟随系统自动切换深色模式',
+    defaultEnabled: true,
+    setup() {
+        const prefersColorSchemeQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
+        onInit(() => {
+            if (prefersColorSchemeQuery) {
+                applyPreferredDarkMode(prefersColorSchemeQuery.matches);
+                prefersColorSchemeQuery.addEventListener('change', handlePrefersColorSchemeChange);
+            }
+        });
+        function handlePrefersColorSchemeChange(e) {
+            applyPreferredDarkMode(e.matches);
+        }
+        function applyPreferredDarkMode(preferred) {
+            const themeButton = $(document.body, '._popcon_18dhr_163 ._box_1chqx_2 button[displaymode]');
+            const currentMode = attr(document.documentElement, 'data-theme');
+            if (themeButton && (preferred != (currentMode === 'dark'))) {
+                themeButton.click();
+            }
+        }
+    },
+});
+
+registerModule({
+    id: 'expand_pics',
+    name: '自动展开超过9张的图片',
+    defaultEnabled: true,
+    setup() {
+        onMounted('FeedPicture', (instance) => {
+            const el = instance.vnode.el;
+            if (!el)
+                return;
+            const props = instance.props;
+            if (props.pic_num <= 9)
+                return;
+            const mask = $(el, '[class*="_mask_"]');
+            if (!mask)
+                return;
+            // The actual flex wrap container is the first child of the picture row
+            const wrap = el.firstElementChild;
+            if (!wrap)
+                return;
+            // Extract class names from existing items to match styling
+            const refItem = $(wrap, '[class*="_item_"]');
+            const refPic = $(wrap, '[class*="_pic_"]');
+            const refImg = $(wrap, 'img');
+            const itemClasses = refItem?.className.split(' ').filter(c => c) ?? [];
+            const picClasses = refPic?.className.split(' ').filter(c => c) ?? [];
+            const imgClasses = refImg?.className.split(' ').filter(c => c) ?? [];
+            on(mask, 'mouseenter', () => {
+                style(mask, { 'display': 'none' });
+                expandPics(wrap, props.pics, instance, itemClasses, picClasses, imgClasses);
+                window.dispatchEvent(new Event('resize'));
+            });
+            on(el, 'mouseleave', () => {
+                style(mask, { 'display': '' });
+                for (const item of $$(wrap, '.awsl-picbox-item')) {
+                    item.remove();
+                }
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
+    },
+});
+function expandPics(wrap, pics, instance, itemClasses, picClasses, imgClasses) {
+    const extraPics = pics.slice(9);
+    for (const [idx, pic] of extraPics.entries()) {
+        const inlineBlock = append(wrap, () => create('div', [
+            'awsl-picbox-item',
+            ...itemClasses,
+        ], {
+            style: {
+                'padding-left': '0.25rem',
+                'padding-top': '0.25rem',
+            },
+        }));
+        const square = append(inlineBlock, () => create('div', picClasses));
+        const img = create('img', imgClasses, {
+            attrs: { 'src': pic.url },
+            events: {
+                click: (e) => {
+                    instance.emit('pictureTap', {
+                        index: 9 + idx,
+                        pics,
+                    }, e, e.target);
+                },
+            },
+        });
+        append(square, () => create('div', ['woo-picture-hoverMask']));
+        append(square, () => create('div', ['woo-picture-slot'], {}, [() => img]));
     }
 }
+
+registerModule({
+    id: 'expand_replies',
+    name: '展开评论区回复浮层',
+    defaultEnabled: true,
+    setup() {
+        const style = document.createElement('style');
+        style.textContent = '[class*="_scroll3_"] { height: auto !important; max-height: calc(100vh - 200px) !important; }';
+        document.head.appendChild(style);
+    },
+});
 
 const ENV_GM = (typeof GM != 'undefined');
 function getValue(key, defaultValue) {
@@ -129,167 +262,6 @@ function setValue(key, value) {
         });
     }
 }
-
-const modules = new Map();
-function registerModule(module) {
-    modules.set(module.id, { module });
-    console.log('[AWSL] Registered module:', module.id);
-}
-async function isModuleEnabled(module) {
-    return getValue(`moduleEnabled:${module.id}`, module.defaultEnabled);
-}
-async function getModules() {
-    return Promise.all(Array.from(modules.values()).map(async (record) => ({
-        module: record.module,
-        enabled: await isModuleEnabled(record.module),
-    })));
-}
-async function loadModules() {
-    for (const record of modules.values()) {
-        if (await isModuleEnabled(record.module)) {
-            record.observer = observe(document.body, record.module.init);
-            console.log('[AWSL] Loaded module:', record.module.id);
-        }
-        else {
-            console.log('[AWSL] Skipped module:', record.module.id);
-        }
-    }
-}
-async function enableModule(id) {
-    const record = modules.get(id);
-    if (record && !record.observer) {
-        record.observer = observe(document.body, record.module.init);
-        await setValue(`moduleEnabled:${id}`, true);
-        console.log('[AWSL] Enabled module:', id);
-    }
-}
-async function disableModule(id) {
-    const record = modules.get(id);
-    if (record && record.observer) {
-        record.observer.disconnect();
-        delete record.observer;
-        record.module.cleanup?.();
-        await setValue(`moduleEnabled:${id}`, false);
-        console.log('[AWSL] Disabled module:', id);
-    }
-}
-
-const prefersColorSchemeQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
-registerModule({
-    id: 'auto_dark_mode',
-    name: '跟随系统自动切换深色模式',
-    defaultEnabled: true,
-    init() {
-        if (prefersColorSchemeQuery) {
-            applyPreferredDarkMode(prefersColorSchemeQuery.matches);
-            prefersColorSchemeQuery.addEventListener('change', handlePrefersColorSchemeChange);
-        }
-    },
-    cleanup() {
-        if (prefersColorSchemeQuery) {
-            prefersColorSchemeQuery.removeEventListener('change', handlePrefersColorSchemeChange);
-        }
-    },
-});
-function handlePrefersColorSchemeChange(e) {
-    applyPreferredDarkMode(e.matches);
-}
-function applyPreferredDarkMode(preferred) {
-    const themeButton = $(document.body, '._popcon_18dhr_163 ._box_1chqx_2 button[displaymode]');
-    const currentMode = attr(document.documentElement, 'data-theme');
-    if (themeButton && (preferred != (currentMode === 'dark'))) {
-        themeButton.click();
-    }
-}
-
-registerModule({
-    id: 'expand_pics',
-    name: '自动展开超过9张的图片',
-    defaultEnabled: true,
-    init() {
-        const containers = $$(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
-        for (const container of containers) {
-            attrs(container, { 'awsl-picbox': 'yes' });
-            const vue = container.__vue__;
-            const context = vue?.$vnode.context;
-            if (!context) {
-                continue;
-            }
-            const mask = $(container, '.picture_mask_20G3v');
-            if (mask) {
-                on(mask, 'mouseenter', () => {
-                    style(mask, { 'display': 'none' });
-                    expand(container, context);
-                    window.dispatchEvent(new Event('resize')); // Force page relayout
-                });
-                on(container, 'mouseleave', () => {
-                    style(mask, { 'display': '' });
-                    for (const item of $$(container, '.awsl-picbox-item')) {
-                        item.remove();
-                    }
-                    window.dispatchEvent(new Event('resize')); // Force page relayout
-                });
-            }
-        }
-    },
-});
-function expand(container, context) {
-    const pics = context.pics.slice(9);
-    for (const [idx, pic] of pics.entries()) {
-        const inlineBlock = append(container, () => create('div', [
-            'awsl-picbox-item',
-            'woo-box-item-inlineBlock',
-            'picture_item_3zpCn',
-            'picture_cursor_h5pJF',
-        ], {
-            style: {
-                'padding-left': '0.25rem',
-                'padding-top': '0.25rem',
-                'flex-grow': '0',
-            },
-        }));
-        const square = append(inlineBlock, () => create('div', [
-            'woo-picture-main',
-            'woo-picture-square',
-            'woo-picture-hover',
-            'picture_pic_eLDxR',
-        ]));
-        const img = create('img', ['picture_focusImg_1z5In'], {
-            attrs: { 'src': pic.url },
-            events: {
-                click: (e) => context.$emit('picture-tap', {
-                    index: 9 + idx,
-                    pics: context.pics,
-                    content: context.$attrs.content,
-                }, e, e.target),
-            },
-        });
-        // TODO
-        // if (pic.focus_point) {
-        //   if (pic.focus_point.width > pic.focus_point.height) {
-        //   } else if (pic.focus_point.width < pic.focus_point.height) {
-        //   }
-        // }
-        append(square, () => create('div', ['woo-picture-hoverMask']));
-        append(square, () => create('div', ['woo-picture-slot'], {}, [() => img]));
-    }
-}
-
-registerModule({
-    id: 'expand_replies',
-    name: '展开评论区回复浮层',
-    defaultEnabled: true,
-    init() {
-        const modals = $$(document, '.ReplyModal_scroll3_2kADQ:not([awsl-expand-replies="yes"])');
-        for (const modal of modals) {
-            attrs(modal, { 'awsl-expand-replies': 'yes' });
-            style(modal, {
-                'height': 'auto',
-                'max-height': 'calc(100vh - 132px)',
-            });
-        }
-    },
-});
 
 function createButton(text, type = 'default', classes = []) {
     return create('button', [
@@ -348,37 +320,40 @@ function createModal(title, content) {
 
 const DEFAULT_WORDS = '草;awsl';
 let words = [];
-getValue('words', DEFAULT_WORDS).then(v => {
-    words = v.split(';').filter(t => !!t);
-});
 registerModule({
     id: 'fast_forward',
     name: '一键转发短语',
     defaultEnabled: true,
-    init() {
-        const composers = $$(document, '[composerconfig]');
-        for (const composer of composers) {
-            const ctx = $H(composer.parentElement, {
-                textarea: '._input_1fox3_8',
-                submit: '.woo-button-primary',
-                composer: '.woo-box-item-flex ._mar1_1n75r_2',
+    setup() {
+        getValue('words', DEFAULT_WORDS).then(v => {
+            words = v.split(';').filter(t => !!t);
+        });
+        onInit(() => {
+            observe(document.body, () => {
+                const composers = $$(document, '[class*="_mar1_1n75r"]');
+                for (const composer of composers) {
+                    const container = composer.closest('[class*="_box_m3n8j"]');
+                    if (!container)
+                        continue;
+                    const textarea = $(container, 'textarea[class*="_input_1fox3"]');
+                    const submit = $(container, '.woo-button-primary');
+                    if (!textarea || !submit)
+                        continue;
+                    const visibleLimits = $(composer, '[class*="_limits_"]');
+                    if (!visibleLimits) {
+                        // Not a forward composer, clean up if needed
+                        destroyButtons({ composer });
+                        destroyMenus(composer);
+                        continue;
+                    }
+                    // Already set up
+                    if ($(composer, '.awsl-fastforward'))
+                        continue;
+                    setupButtons({ textarea, submit, composer });
+                    setupMenus({ textarea, submit, composer }, visibleLimits);
+                }
             });
-            if (!ctx)
-                continue;
-            const visibleLimits = $(ctx.composer, '._limits_1oo0f_2');
-            const isForward = !!visibleLimits;
-            if (isForward) {
-                bind(ctx.composer, 'awsl-fastforward', '1', () => {
-                    setupButtons(ctx);
-                    setupMenus(ctx, visibleLimits);
-                });
-            }
-            else {
-                attrs(ctx.composer, { 'awsl-fastforward': null });
-                destroyButtons(ctx);
-                destroyMenus(ctx);
-            }
-        }
+        });
     },
 });
 function setupButtons(ctx) {
@@ -417,6 +392,11 @@ function destroyButtons(ctx) {
         el.remove();
     }
 }
+function destroyMenus(composer) {
+    for (const el of $$(composer, '.awsl-fastforward-menu')) {
+        el.remove();
+    }
+}
 function setupMenus(ctx, visibleLimits) {
     function insertMenu(text) {
         const menu = create('span', [], {
@@ -446,11 +426,6 @@ function setupMenus(ctx, visibleLimits) {
     }
     const custom = insertMenu('自定义');
     on(custom, 'click', () => showCustom(ctx));
-}
-function destroyMenus(ctx) {
-    for (const el of $$(ctx.composer, '.awsl-fastforward-menu')) {
-        el.remove();
-    }
 }
 function createModalWithButtons(title, content, cancelText, okText, onOk) {
     return createModal(title, (modal) => [
@@ -668,226 +643,87 @@ registerModule({
     id: 'logo_click',
     name: '点击 LOGO 进入「最新微博」',
     defaultEnabled: true,
-    init() {
-        const app = $(document, '#app:not([awsl-logoclick="yes"])');
-        if (!app)
-            return;
-        attrs(app, { 'awsl-logoclick': 'yes' });
-        const vue = app.__vue__;
-        if (!vue)
-            return;
-        const uid = vue.config?.uid;
-        if (!uid)
-            return;
-        const oldLogo = $(app, '.Nav_logoWrap_2fPbO');
-        if (!oldLogo)
-            return;
-        const oldLogoHTML = oldLogo.outerHTML;
-        oldLogo.outerHTML = oldLogoHTML; // Recreate logo element to remove existing event listeners
-        const newLogo = $(app, '.Nav_logoWrap_2fPbO');
-        attrs(newLogo, {
-            'href': `/mygroups?gid=11000${uid}`,
-        });
-        on(newLogo, 'click', (e) => {
-            e.preventDefault();
-            vue.$router.push({
-                name: 'mygroups',
-                query: { gid: `11000${uid}` },
-            });
-            // Ensure timeline is reloaded
-            if (vue.$store.state.feed.feedGroup.left) {
-                const curIndex = 1;
-                const navItem = vue.$store.state.feed.feedGroup.left[curIndex];
-                vue.$Bus.$emit('handleHomeNav', navItem, curIndex, 'left');
-            }
-        });
-    }
-});
-
-observe(document.body, function settings() {
-    const nav = $(document, '.Nav_popcon__F1hb:not([awsl="yes"])');
-    if (!nav)
-        return;
-    attrs(nav, { 'awsl': 'yes' });
-    for (const item of nav.children) {
-        if (!$(item, '[*|href="#woo_svg_nav_configFlat"]'))
-            continue;
-        const navItem = item;
-        if (!navItem.__vue__)
-            return;
-        const vue = navItem.__vue__;
-        const { configItems } = vue.$options.propsData;
-        configItems.splice(-1, 0, { name: 'AWSL 设置', type: 'awsl' });
-        vue.$on('config-item-tap', (idx) => {
-            const item = configItems[idx];
-            if (item?.type == 'awsl') {
-                showSetings();
-            }
-        });
-    }
-});
-async function showSetings() {
-    const modules = await getModules();
-    const toggles = {};
-    createModal('AWSL 设置', (modal) => [
-        () => create('div', [], {
-            style: {
-                'padding': '16px',
-            },
-        }, modules.map(({ module, enabled }) => () => {
-            const toggle = create('input', [], {
-                attrs: {
-                    type: 'checkbox',
-                    checked: enabled ? 'checked' : null,
-                },
-                style: {
-                    'margin-right': '8px',
-                },
-            });
-            toggles[module.id] = toggle;
-            return create('div', [], {}, [
-                () => create('label', ['woo-box-flex', 'woo-box-alignCenter'], {
-                    style: {
-                        'cursor': 'pointer',
-                        'user-select': 'none',
-                        'margin-bottom': '8px',
-                    },
-                }, [
-                    () => toggle,
-                    () => create('span', [], { html: module.name }),
-                ]),
-            ]);
-        })),
-        () => create('div', [
-            'wbpro-layer-btn',
-            'woo-box-flex',
-            'woo-box-justifyCenter',
-        ], {}, [
-            () => {
-                const close = createButton('取消', 'default', ['wbpro-layer-btn-item']);
-                on(close, 'click', () => modal.remove());
-                return close;
-            },
-            () => {
-                const save = createButton('保存', 'primary', ['wbpro-layer-btn-item']);
-                on(save, 'click', async () => {
-                    for (const { module, enabled } of modules) {
-                        const toggle = toggles[module.id];
-                        if (!toggle)
-                            continue;
-                        if (enabled && !toggle.checked) {
-                            await disableModule(module.id);
-                        }
-                        else if (!enabled && toggle.checked) {
-                            await enableModule(module.id);
-                        }
-                    }
-                    modal.remove();
+    setup() {
+        onInit((app) => {
+            const { $router, $store, $Bus } = app.config.globalProperties;
+            const uid = $store.state.config?.config?.uid;
+            if (!uid)
+                return;
+            const logo = $(document, 'a[class*="_logoWrap"]');
+            if (!logo)
+                return;
+            attrs(logo, { 'href': `/mygroups?gid=11000${uid}` });
+            on(logo, 'click', (e) => {
+                e.preventDefault();
+                $router.push({
+                    name: 'mygroups',
+                    query: { gid: `11000${uid}` },
                 });
-                return save;
-            },
-        ]),
-    ]);
-}
+                const left = $store.state.feed.feedGroup.left;
+                if (left) {
+                    const curIndex = 1;
+                    const navItem = left[curIndex];
+                    $Bus.$emit('handleHomeNav', navItem, curIndex, 'left');
+                }
+            });
+        });
+    },
+});
 
-const SPLITTEER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
+const SPLITTER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
 registerModule({
     id: 'user_remark',
     name: '优化用户备注显示',
     defaultEnabled: true,
-    init() {
-        for (const container of $$(document, '.head_content_wrap_27749:not([awsl-infobox="yes"])')) {
-            attrs(container, { 'awsl-infobox': 'yes' });
-            const context = container.__vue__?.$vnode.context;
-            if (!context)
-                continue;
-            const ctx = $H(container, {
-                nick: '.head_nick_1yix2',
-                nickName: '.head_name_24eEB > span',
-                from: '.head-info_from_3FX0m > .woo-box-flex',
-            });
-            if (!ctx)
-                continue;
-            if (context.region_name) {
-                const ip = $(ctx.from, '.head-info_ip_3ywCW');
-                if (!ip) {
-                    const ip = create('div', ['head-info_ip_3ywCW'], {
-                        attrs: { title: context.region_name },
-                        html: context.region_name,
-                    });
-                    const source = $(ctx.from, '.head-info_source_2zcEX');
-                    if (source) {
-                        insertBefore(ctx.from, source, () => ip);
-                    }
-                    else {
-                        append(ctx.from, () => ip);
-                    }
-                }
-            }
+    setup() {
+        onMounted('Feed', (instance) => {
+            const el = instance.vnode.el;
+            if (!el)
+                return;
+            const data = instance.props.data;
+            if (!data?.user)
+                return;
+            const nick = $(el, '[class*="_nick_"]');
+            if (!nick || nick.querySelector('.awsl-remark'))
+                return;
+            const nameLink = $(nick, 'a[class*="_name_"]');
+            const nameSpan = nameLink?.querySelector('span');
             const info = [];
-            if (context.userInfo.remark) {
-                html(ctx.nickName, context.userInfo.screen_name);
-                info.push(`备注：${context.userInfo.remark}`);
-            }
-            if (context.userInfo.follow_me) {
-                info.push(context.userInfo.following ? '互相关注' : '关注了我');
-            }
-            append(ctx.nick, () => create('div', [], {
-                style: {
-                    'color': 'var(--w-sub)',
-                    'font-size': '80%',
-                    'font-weight': 'normal',
-                    'margin-left': '0.5em',
-                },
-                html: info.join(SPLITTEER),
-            }));
-        }
-        for (const container of $$(document, '.Feed_retweet_JqZJb:not([awsl-infobox="yes"])')) {
-            attrs(container, { 'awsl-infobox': 'yes' });
-            const data = container.__vue__?.$vnode.context.transData;
-            if (!data)
-                continue;
-            const ctx = $H(container, {
-                head: '.detail_reText_30vF1 > div > .woo-box-flex',
-                headNick: '.detail_nick_u-ffy',
-                headVerify: '.detail_verify_1GOx9',
-                from: '.head-info_from_3FX0m > .woo-box-flex',
-            });
-            if (!ctx)
-                continue;
-            if (data.region_name) {
-                append(ctx.from, () => create('div', ['head-info_ip_3ywCW'], {
-                    attrs: { title: data.region_name },
-                    html: data.region_name,
-                }));
-            }
-            if (data.source) {
-                append(ctx.from, () => create('div', ['head-info_cut_1tPQI', 'head-info_source_2zcEX'], {
-                    html: `来自 ${data.source}`,
-                }));
-            }
-            if (!data.user.verified) {
-                ctx.headVerify.remove();
-            }
-            const info = [];
-            if (data.user.remark) {
-                html(ctx.headNick, data.user.screen_name);
+            if (data.user.remark && nameSpan) {
+                html(nameSpan, data.user.screen_name);
                 info.push(`备注：${data.user.remark}`);
             }
             if (data.user.follow_me) {
                 info.push(data.user.following ? '互相关注' : '关注了我');
             }
-            append(ctx.head, () => create('div', [], {
-                style: {
-                    'color': 'var(--w-sub)',
-                    'font-size': '80%',
-                    'font-weight': 'normal',
-                    'margin-left': '0.5em',
-                },
-                html: info.join(SPLITTEER),
-            }));
-        }
+            if (info.length > 0) {
+                append(nick, () => create('div', ['awsl-remark'], {
+                    style: {
+                        'color': 'var(--w-sub)',
+                        'font-size': '80%',
+                        'font-weight': 'normal',
+                        'margin-left': '0.5em',
+                    },
+                    html: info.join(SPLITTER),
+                }));
+            }
+        });
     },
 });
 
+observe(document.body, () => {
+    const root = $(document, '[data-v-app]:not([awsl-root="yes"])');
+    if (!root)
+        return;
+    attrs(root, { 'awsl-root': 'yes' });
+    console.log('[AWSL] Vue app found, installing mixin');
+    const vue = root.__vue_app__;
+    vue.mixin({
+        mounted() {
+            const instance = this._;
+            dispatchMounted(instance, vue);
+        },
+    });
+    dispatchInit(vue);
+});
 loadModules();
