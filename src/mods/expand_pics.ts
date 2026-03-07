@@ -1,104 +1,106 @@
+import type { ComponentInternalInstance } from 'vue';
 import { registerModule } from '@/module';
-import { $, $$, append, attrs, create, on, style } from '@/utils/dom';
-import { IVueApp, VueHTMLElement, WithVNode, WithVNodeContext } from '@/utils/vue';
+import { onMounted } from '@/hooks';
+import { $, $$, append, create, on, style } from '@/utils/dom';
 
-interface IPictureBox {
-  pic_num: number;
-  pics: {
-    focus_point: undefined | {
-      width: number;
-      height: number;
-      left: number;
-      top: number;
-    };
-    geo: {
-      width: number;
-      height: number;
-    };
-    pid: string;
-    type: 'pic';
-    url: string;
-  }[];
+interface IPic {
+  url: string;
+  geo: { width: number; height: number };
+  large: { url: string };
+  pid: string;
+  focus_point?: {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+  };
+  type: string;
 }
 
-type IPictureBoxElement = VueHTMLElement<IVueApp & WithVNode<WithVNodeContext<IPictureBox>>>;
+interface IFeedPictureProps {
+  pics: IPic[];
+  pic_num: number;
+  isMask: boolean;
+}
 
 registerModule({
   id: 'expand_pics',
   name: '自动展开超过9张的图片',
   defaultEnabled: true,
-  init() {
-    const containers = $$<IPictureBoxElement>(document, '.picture_inlineNum3_3P7k1:not([awsl-picbox="yes"])');
-    for (const container of containers) {
-      attrs(container, { 'awsl-picbox': 'yes' });
+  setup() {
+    onMounted('FeedPicture', (instance) => {
+      const el = instance.vnode.el as HTMLElement | null;
+      if (!el) return;
 
-      const vue = container.__vue__;
-      const context = vue?.$vnode.context;
-      if (!context) {
-        continue;
-      }
+      const props = instance.props as unknown as IFeedPictureProps;
+      if (props.pic_num <= 9) return;
 
-      const mask = $(container, '.picture_mask_20G3v');
-      if (mask) {
-        on(mask, 'mouseenter', () => {
-          style(mask, { 'display': 'none' });
-          expand(container, context);
-          window.dispatchEvent(new Event('resize'));  // Force page relayout
-        });
+      const mask = $<HTMLElement>(el, '[class*="_mask_"]');
+      if (!mask) return;
 
-        on(container, 'mouseleave', () => {
-          style(mask, { 'display': '' });
-          for (const item of $$(container, '.awsl-picbox-item')) {
-            item.remove();
-          }
-          window.dispatchEvent(new Event('resize'));  // Force page relayout
-        });
-      }
-    }
+      // The actual flex wrap container is the first child of the picture row
+      const wrap = el.firstElementChild as HTMLElement | null;
+      if (!wrap) return;
+
+      // Extract class names from existing items to match styling
+      const refItem = $<HTMLElement>(wrap, '[class*="_item_"]');
+      const refPic = $<HTMLElement>(wrap, '[class*="_pic_"]');
+      const refImg = $<HTMLElement>(wrap, 'img');
+      const itemClasses = refItem?.className.split(' ').filter(c => c) ?? [];
+      const picClasses = refPic?.className.split(' ').filter(c => c) ?? [];
+      const imgClasses = refImg?.className.split(' ').filter(c => c) ?? [];
+
+      on(mask, 'mouseenter', () => {
+        style(mask, { 'display': 'none' });
+        expandPics(wrap, props.pics, instance, itemClasses, picClasses, imgClasses);
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      on(el, 'mouseleave', () => {
+        style(mask, { 'display': '' });
+        for (const item of $$(wrap, '.awsl-picbox-item')) {
+          item.remove();
+        }
+        window.dispatchEvent(new Event('resize'));
+      });
+    });
   },
 });
 
-function expand(container: HTMLElement, context: IVueApp & IPictureBox): void {
-  const pics = context.pics.slice(9);
+function expandPics(
+  wrap: HTMLElement,
+  pics: IPic[],
+  instance: ComponentInternalInstance,
+  itemClasses: string[],
+  picClasses: string[],
+  imgClasses: string[],
+): void {
+  const extraPics = pics.slice(9);
 
-  for (const [idx, pic] of pics.entries()) {
-    const inlineBlock = append(container, () => create<HTMLElement>('div', [
+  for (const [idx, pic] of extraPics.entries()) {
+    const inlineBlock = append(wrap, () => create<HTMLElement>('div', [
       'awsl-picbox-item',
-      'woo-box-item-inlineBlock',
-      'picture_item_3zpCn',
-      'picture_cursor_h5pJF',
+      ...itemClasses,
     ], {
       style: {
         'padding-left': '0.25rem',
         'padding-top': '0.25rem',
-        'flex-grow': '0',
       },
     }));
 
-    const square = append(inlineBlock, () => create('div', [
-      'woo-picture-main',
-      'woo-picture-square',
-      'woo-picture-hover',
-      'picture_pic_eLDxR',
-    ]));
+    const square = append(inlineBlock, () => create('div', picClasses));
 
-    const img = create('img', ['picture_focusImg_1z5In'], {
+    const img = create('img', imgClasses, {
       attrs: { 'src': pic.url },
       events: {
-        click: (e) => context.$emit('picture-tap', {
-          index: 9 + idx,
-          pics: context.pics,
-          content: context.$attrs.content,
-        }, e, e.target),
+        click: (e) => {
+          instance.emit('pictureTap', {
+            index: 9 + idx,
+            pics,
+          }, e, e.target);
+        },
       },
     });
-
-    // TODO
-    // if (pic.focus_point) {
-    //   if (pic.focus_point.width > pic.focus_point.height) {
-    //   } else if (pic.focus_point.width < pic.focus_point.height) {
-    //   }
-    // }
 
     append(square, () => create('div', ['woo-picture-hoverMask']));
     append(square, () => create('div', ['woo-picture-slot'], {}, [() => img]));
