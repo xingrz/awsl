@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance } from 'vue';
 import { loadModules } from '@/module';
-import { dispatchInit, dispatchMounted } from '@/hooks';
+import { dispatchInit, dispatchMounted, dispatchUpdated } from '@/hooks';
 import { $, attrs, observe } from '@/utils/dom';
 import type { VueHTMLElement } from '@/utils/vue';
 
@@ -26,6 +26,10 @@ observe(document.body, (_, observer) => {
     mounted() {
       const instance = this._ as ComponentInternalInstance;
       dispatchMounted(instance, vue);
+    },
+    updated() {
+      const instance = this._ as ComponentInternalInstance;
+      dispatchUpdated(instance, vue);
     },
   });
 

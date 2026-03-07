@@ -1,7 +1,7 @@
 import { registerModule } from '@/module';
-import { onInit } from '@/hooks';
+import { onUpdated } from '@/hooks';
 import { getValue, setValue } from '@/utils/kv';
-import { $, $$, ICreator, append, attr, attrs, create, html, insertBefore, observe, on, style } from '@/utils/dom';
+import { $, $$, $H, ICreator, append, attr, attrs, create, html, insertBefore, on, style } from '@/utils/dom';
 import { createButton, createModal } from '@/utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
@@ -23,32 +23,29 @@ registerModule({
       words = v.split(';').filter(t => !!t);
     });
 
-    onInit(() => {
-      observe(document.body, () => {
-        const composers = $$(document, '[class*="_mar1_1n75r"]');
-        for (const composer of composers) {
-          const container = composer.closest('[class*="_box_m3n8j"]');
-          if (!container) continue;
+    onUpdated('Composer', (instance) => {
+      const composer = instance.vnode.el as HTMLElement | null;
+      if (!composer) return;
 
-          const textarea = $<HTMLInputElement>(container, 'textarea[class*="_input_1fox3"]');
-          const submit = $<HTMLElement>(container, '.woo-button-primary');
-          if (!textarea || !submit) continue;
-
-          const visibleLimits = $<HTMLElement>(composer, '[class*="_limits_"]');
-          if (!visibleLimits) {
-            // Not a forward composer, clean up if needed
-            destroyButtons({ textarea, submit, composer });
-            destroyMenus(composer);
-            continue;
-          }
-
-          // Already set up
-          if ($(composer, '.awsl-fastforward')) continue;
-
-          setupButtons({ textarea, submit, composer });
-          setupMenus({ textarea, submit, composer }, visibleLimits);
-        }
+      const ctx = $H<{
+        textarea: HTMLInputElement;
+        submit: HTMLElement;
+      }>(composer, {
+        textarea: 'textarea[class*="_input_"]',
+        submit: 'button.woo-button-primary',
       });
+      if (!ctx) return;
+
+      const visibleLimits = $<HTMLElement>(composer, '[class*="_limits_"]');
+      const alreadySetup = $(composer, '.awsl-fastforward');
+
+      if (!visibleLimits) {
+        destroyButtons({ ...ctx, composer });
+        destroyMenus({ ...ctx, composer });
+      } else if (!alreadySetup) {
+        setupButtons({ ...ctx, composer });
+        setupMenus({ ...ctx, composer }, visibleLimits);
+      }
     });
   },
 });
@@ -93,12 +90,6 @@ function destroyButtons(ctx: IComposeBar): void {
   }
 }
 
-function destroyMenus(composer: HTMLElement): void {
-  for (const el of $$(composer, '.awsl-fastforward-menu')) {
-    el.remove();
-  }
-}
-
 function setupMenus(ctx: IComposeBar, visibleLimits: HTMLElement): void {
   function insertMenu(text: string): HTMLElement {
     const menu = create('span', [], {
@@ -132,6 +123,12 @@ function setupMenus(ctx: IComposeBar, visibleLimits: HTMLElement): void {
 
   const custom = insertMenu('自定义');
   on(custom, 'click', () => showCustom(ctx));
+}
+
+function destroyMenus(ctx: IComposeBar): void {
+  for (const el of $$(ctx.composer, '.awsl-fastforward-menu')) {
+    el.remove();
+  }
 }
 
 function createModalWithButtons(
