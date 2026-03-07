@@ -24,9 +24,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - uses: benjlevesque/short-sha@v3.0
-        id: short-sha
-
       - name: Publish
         uses: crazy-max/ghaction-github-pages@v4
         with:
@@ -34,6 +31,6 @@ jobs:
           keep_history: true
           allow_empty_commit: false
           build_dir: dist
-          commit_message: 'Auto publish from commit ${{ steps.short-sha.outputs.sha }}'
+          commit_message: 'Publish ${{ github.ref_name }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
