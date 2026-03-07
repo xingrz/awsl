@@ -13,10 +13,11 @@ import './mods/logo_click';
 // import './mods/settings';
 import './mods/user_remark';
 
-observe(document.body, () => {
+observe(document.body, (_, observer) => {
   const root = $<VueHTMLElement>(document, '[data-v-app]:not([awsl-root="yes"])');
   if (!root) return;
   attrs(root, { 'awsl-root': 'yes' });
+  observer.disconnect();
 
   console.log('[AWSL] Vue app found, installing mixin');
 
