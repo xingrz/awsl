@@ -1,3 +1,9 @@
+// @ts-nocheck
+// TODO: This module uses Vue 2 APIs (__vue__, $on, $options.propsData) that no
+// longer exist in the Vue 3 version of Weibo. It needs to be rewritten to inject
+// the settings entry into the new navigation structure. For now, it is excluded
+// from index.ts and all modules are always enabled by default.
+
 import { disableModule, enableModule, getModules } from '@/module';
 import { $, attrs, create, observe, on } from '@/utils/dom';
 import { VueHTMLElement } from '@/utils/vue';
