@@ -1,6 +1,6 @@
 {
   "name": "awsl",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "Auto AWSLing",
   "private": true,
   "scripts": {
