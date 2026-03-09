@@ -1,19 +1,7 @@
 import { registerModule } from '@/module';
 import { onMounted } from '@/hooks';
 import { $, $H, append, create, html } from '@/utils/dom';
-
-interface IFeedUser {
-  remark: string;
-  screen_name: string;
-  follow_me: boolean;
-  following: boolean;
-  verified: boolean;
-}
-
-interface IFeedData {
-  user: IFeedUser;
-  region_name: string;
-}
+import type { IFeed, IUser } from '@/utils/weibo';
 
 const SPLITTER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
 
@@ -27,7 +15,7 @@ registerModule({
       const el = instance.vnode.el as HTMLElement | null;
       if (!el) return;
 
-      const data = (instance.props as { data: IFeedData }).data;
+      const data = (instance.props as { data: IFeed }).data;
       if (!data?.user) return;
 
       const ctx = $H<{
@@ -51,7 +39,7 @@ registerModule({
       const el = instance.vnode.el as HTMLElement | null;
       if (!el || !el.classList.contains('retweet')) return;
 
-      const data = (instance.props as { data: IFeedData }).data;
+      const data = (instance.props as { data: IFeed }).data;
       if (!data?.user) return;
 
       const ctx = $H<{
@@ -81,7 +69,7 @@ registerModule({
   },
 });
 
-function buildRemark(container: HTMLElement, user: IFeedUser): void {
+function buildRemark(container: HTMLElement, user: IUser): void {
   const info: string[] = [];
   if (user.remark) {
     info.push(`备注：${user.remark}`);
