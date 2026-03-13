@@ -74,6 +74,22 @@ export function insertBefore<T extends HTMLElement>(parent: ParentNode, child: N
   return element;
 }
 
+export function insertAfter<T extends HTMLElement>(parent: ParentNode, child: Node, creator: ICreator<T>): T {
+  const element = creator(parent as HTMLElement);
+  if (child.nextSibling) {
+    parent.insertBefore(element, child.nextSibling);
+  } else {
+    parent.appendChild(element);
+  }
+  return element;
+}
+
+export function prepend<T extends HTMLElement>(parent: ParentNode, creator: ICreator<T>): T {
+  const element = creator(parent as HTMLElement);
+  parent.prepend(element);
+  return element;
+}
+
 export function append<T extends HTMLElement>(parent: ParentNode, creator: ICreator<T>): T {
   const element = creator(parent as HTMLElement);
   parent.append(element);

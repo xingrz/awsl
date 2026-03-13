@@ -11,6 +11,7 @@ import './mods/fast_forward';
 import './mods/logo_click';
 // TODO: settings is not yet migrated to Vue 3, see settings.ts for details
 // import './mods/settings';
+import './mods/source_remark';
 import './mods/user_remark';
 
 observe(document.body, (_, observer) => {
