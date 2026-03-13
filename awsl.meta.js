@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.8.2
+// @version      2.8.3
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL

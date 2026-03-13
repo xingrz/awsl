@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.8.2
+// @version      2.8.3
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -692,6 +692,66 @@ registerModule({
     },
 });
 
+registerModule({
+    id: 'source_remark',
+    name: '优化来源显示',
+    defaultEnabled: true,
+    setup() {
+        // 信息流一级作者
+        onMounted('Feed', (instance) => {
+            const el = instance.vnode.el;
+            if (!el)
+                return;
+            const data = instance.props.data;
+            if (!data)
+                return;
+            const container = $(el, '[class*="_info_"] [class*="_from_"] > .woo-box-flex:not([awsl-source-remark="yes"])');
+            if (!container || $(container, '[class*="_ip_"]'))
+                return;
+            const source = $(container, '[class*="_source_"]');
+            if (source && data.region_name) {
+                insertBefore(container, source, () => create('div', [
+                    '_ip_1tpft_41',
+                ], {
+                    html: data.region_name,
+                    attrs: { title: data.region_name },
+                }));
+            }
+            attrs(container, { 'awsl-source-remark': 'yes' });
+        });
+        // 转发内容的原作者
+        onMounted('FeedContent', (instance) => {
+            const el = instance.vnode.el;
+            if (!el || !el.classList.contains('retweet'))
+                return;
+            const data = instance.props.data;
+            if (!data)
+                return;
+            const container = $(el, '[class*="_retweetHeadInfo_"] [class*="_from_"] > .woo-box-flex:not([awsl-source-remark="yes"])');
+            if (!container)
+                return;
+            if (data.region_name) {
+                append(container, () => create('div', [
+                    '_ip_1tpft_41',
+                ], {
+                    html: data.region_name,
+                    attrs: { title: data.region_name },
+                }));
+            }
+            if (data.source) {
+                append(container, () => create('div', [
+                    '_cut_1tpft_29',
+                    '_source_1tpft_46',
+                ], {
+                    html: `来自 ${data.source}`,
+                    attrs: { title: `来自 ${data.source}` },
+                }));
+            }
+            attrs(container, { 'awsl-source-remark': 'yes' });
+        });
+    },
+});
+
 const SPLITTER = '<span style="border-right: 1px solid var(--w-off-border); margin: 0 0.5em;"></span>';
 registerModule({
     id: 'user_remark',
@@ -710,12 +770,35 @@ registerModule({
                 nick: '[class*="_nick_"]',
                 name: '[class*="_nick_"] > [class*="_name_"] > span',
             });
-            if (!ctx || $(ctx.nick, '.awsl-remark'))
+            if (!ctx || $(ctx.nick, '.awsl-user-remark'))
                 return;
             if (data.user.remark) {
                 html(ctx.name, data.user.screen_name);
             }
             buildRemark(ctx.nick, data.user);
+        });
+        // 快转
+        onMounted('Feed', (instance) => {
+            const el = instance.vnode.el;
+            if (!el)
+                return;
+            const data = instance.props.data;
+            if (!data?.user)
+                return;
+            const ctx = $H(el, {
+                name: '[class*="_fastfront_"] > span',
+                suffix: '[class*="_fastbehind_"]',
+            });
+            if (!ctx)
+                return;
+            const container = ctx.suffix.parentElement;
+            if (!container || $(container, '.awsl-user-remark'))
+                return;
+            if (data.user.remark) {
+                html(ctx.name, data.user.screen_name);
+            }
+            buildRemark(container, data.user);
+            ctx.suffix.remove();
         });
         // 转发内容的原作者
         onMounted('FeedContent', (instance) => {
@@ -733,7 +816,7 @@ registerModule({
                 return;
             const container = ctx.link.parentElement;
             const verify = $(container, '[class*="_verify_"]');
-            if ($(container, '.awsl-remark'))
+            if ($(container, '.awsl-user-remark'))
                 return;
             if (!data.user.verified && verify) {
                 verify.remove();
@@ -754,7 +837,7 @@ function buildRemark(container, user) {
         info.push(user.following ? '互相关注' : '关注了我');
     }
     if (info.length > 0) {
-        append(container, () => create('div', ['awsl-remark'], {
+        append(container, () => create('div', ['awsl-user-remark'], {
             style: {
                 'color': 'var(--w-sub)',
                 'font-size': '80%',
