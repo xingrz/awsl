@@ -25,13 +25,42 @@ registerModule({
         nick: '[class*="_nick_"]',
         name: '[class*="_nick_"] > [class*="_name_"] > span',
       });
-      if (!ctx || $(ctx.nick, '.awsl-remark')) return;
+      if (!ctx || $(ctx.nick, '.awsl-user-remark')) return;
 
       if (data.user.remark) {
         html(ctx.name, data.user.screen_name);
       }
 
       buildRemark(ctx.nick, data.user);
+    });
+
+    // 快转
+    onMounted('Feed', (instance) => {
+      const el = instance.vnode.el as HTMLElement | null;
+      if (!el) return;
+
+      const data = (instance.props as { data: IFeed }).data;
+      if (!data?.user) return;
+
+      const ctx = $H<{
+        name: HTMLElement;
+        suffix: HTMLElement;
+      }>(el, {
+        name: '[class*="_fastfront_"] > span',
+        suffix: '[class*="_fastbehind_"]',
+      });
+      if (!ctx) return;
+
+      const container = ctx.suffix.parentElement;
+      if (!container || $(container, '.awsl-user-remark')) return;
+
+      if (data.user.remark) {
+        html(ctx.name, data.user.screen_name);
+      }
+
+      buildRemark(container, data.user);
+
+      ctx.suffix.remove();
     });
 
     // 转发内容的原作者
@@ -54,7 +83,7 @@ registerModule({
       const container = ctx.link.parentElement!;
       const verify = $(container, '[class*="_verify_"]');
 
-      if ($(container, '.awsl-remark')) return;
+      if ($(container, '.awsl-user-remark')) return;
 
       if (!data.user.verified && verify) {
         verify.remove();
@@ -79,7 +108,7 @@ function buildRemark(container: HTMLElement, user: IUser): void {
   }
 
   if (info.length > 0) {
-    append(container, () => create('div', ['awsl-remark'], {
+    append(container, () => create('div', ['awsl-user-remark'], {
       style: {
         'color': 'var(--w-sub)',
         'font-size': '80%',
