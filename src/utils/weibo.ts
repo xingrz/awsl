@@ -1,4 +1,4 @@
-import { $, ICreator, append, create, on } from './dom';
+import { $, ICreator, append, create } from './dom';
 
 export interface IUser {
   avatar_hd: string;
@@ -117,43 +117,47 @@ export function createButton(text: string, type = 'default', classes: string[] =
   ]);
 }
 
+export function createChip(type: string, content: ICreator<HTMLElement>, onClick: (this: HTMLElement, ev: HTMLElementEventMap['click']) => any): HTMLElement {
+  return create('div', ['woo-panel-main', 'woo-panel-top', 'woo-panel-right', 'woo-panel-bottom', 'woo-panel-left', '_lsort2_19lzx_23'], {}, [
+    () => create('div', ['woo-box-flex', 'woo-box-alignCenter', '_lsort2in_19lzx_30', '_lsort2in_19lzx_30'], {}, [
+      () => content(create('div', ['wbpro-textcut'])),
+      () => create('i', ['woo-font', `woo-font--${type}`, 'woo-fonticon-multi', 'woo-fonticon-dark'], {
+        events: { click: onClick },
+      }),
+    ]),
+  ]);
+}
+
 export function createModal(title: string, content: (modal: HTMLElement) => ICreator<HTMLElement>[]): void {
   const app = $(document.body, '#app');
   if (!app) return;
 
-  append(app, () => create('div', [
-    'woo-box-flex',
-    'woo-box-alignCenter',
-    'woo-box-justifyCenter',
-    'woo-modal-wrap',
-  ], {}, [
+  append(app, () => create('div', ['woo-box-flex', 'woo-box-alignCenter', 'woo-box-justifyCenter', 'woo-modal-wrap'], {}, [
     (modal) => create('div', ['woo-modal-main'], {}, [
       () => create('div', ['wbpro-layer'], {}, [
         () => create('div', ['woo-panel-main', 'woo-panel-bottom'], {}, [
-          () => create('div', ['wbpro-layer-tit', 'woo-box-flex'], {}, [
-            () => create('div', ['wbpro-layer-tit-text', 'woo-box-item-flex'], {
+          () => create('div', ['woo-box-flex', 'wbpro-layer-tit'], {}, [
+            () => create('div', ['woo-box-item-flex', 'wbpro-layer-tit-text'], {
               style: { 'align-self': 'center' },
               html: title,
             }),
-            () => {
-              const close = create('div', [
-                'wbpro-layer-tit-opt',
-                'woo-box-flex',
-                'woo-box-alignCenter',
-                'woo-box-justifyCenter',
-              ], {
-                html: `<i class="woo-font woo-font--cross"></i>`,
-              });
-              return on(close, 'click', () => modal.remove());
-            },
+            () => create('div', [
+              'woo-box-flex',
+              'woo-box-alignCenter',
+              'woo-box-justifyCenter',
+              'wbpro-layer-tit-opt',
+            ], {
+              events: { click: () => modal.remove() },
+            }, [
+              () => create('i', ['woo-font', 'woo-font--cross'])
+            ]),
           ]),
         ]),
         ...content(modal),
       ]),
     ]),
-    (modal) => {
-      const mask = create('div', ['woo-modal-mask']);
-      return on(mask, 'click', () => modal.remove());
-    },
+    (modal) => create('div', ['woo-modal-mask'], {
+      events: { click: () => modal.remove() },
+    }),
   ]));
 }

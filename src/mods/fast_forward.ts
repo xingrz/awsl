@@ -2,7 +2,7 @@ import { registerModule } from '@/module';
 import { onUpdated } from '@/hooks';
 import { getValue, setValue } from '@/utils/kv';
 import { $, $$, $H, ICreator, append, attr, attrs, create, html, insertBefore, on, style } from '@/utils/dom';
-import { createButton, createModal } from '@/utils/weibo';
+import { createButton, createChip, createModal } from '@/utils/weibo';
 
 const DEFAULT_WORDS = '草;awsl';
 
@@ -173,40 +173,12 @@ function showCustom(ctx: IComposeBar): void {
     },
   });
 
-  function createIconBtn(title: string, icon: string): HTMLElement {
-    return create('i', ['woo-font', `woo-font--${icon}`], {
-      style: {
-        'color': 'var(--w-fonticon)',
-        'cursor': 'pointer',
-        'margin': '0 8px',
-      },
-      attrs: { title },
-    });
-  }
-
-  function createItemWrap(): HTMLElement {
-    return create('div', [
-      'woo-box-flex',
-      'woo-box-alignCenter',
-    ], {
-      style: {
-        'border': '1px solid var(--w-color-gray-7)',
-        'border-radius': 'var(--w-border-radius)',
-        'color': 'var(--w-main)',
-        'font-size': '13px',
-        'height': '28px',
-      },
-    });
-  }
-
   const currentWords = [...words];
 
   const add = append(container, () => {
-    const wrap = createItemWrap();
-
-    const input = append(wrap, () => create<HTMLInputElement>('input', [], {
+    const input = create<HTMLInputElement>('input', [], {
       style: {
-        'padding': '4px 8px',
+        'padding': '4px',
         'color': 'var(--w-main)',
         'font-size': '13px',
         'border': 'none',
@@ -214,10 +186,9 @@ function showCustom(ctx: IComposeBar): void {
         'background': 'none',
       },
       attrs: { placeholder: '添加短语' },
-    }));
+    });
 
-    const btn = append(wrap, () => createIconBtn('添加', 'check'));
-    on(btn, 'click', () => {
+    const chip = createChip('add', () => input, () => {
       const value = input.value.trim();
       if (value) {
         currentWords.push(value);
@@ -226,16 +197,7 @@ function showCustom(ctx: IComposeBar): void {
       }
     });
 
-    return wrap;
-  });
-
-  on(container, 'click', (e) => {
-    if ((e.target as HTMLElement).matches('[data-awsl-word-index]')) {
-      e.stopPropagation();
-      const index = Number(attr(e.target as HTMLElement, 'data-awsl-word-index'));
-      currentWords.splice(index, 1);
-      fillWords();
-    }
+    return chip;
   });
 
   function fillWords() {
@@ -244,18 +206,15 @@ function showCustom(ctx: IComposeBar): void {
     }
 
     for (const [index, word] of currentWords.entries()) {
-      const wrap = insertBefore(container, add, () => createItemWrap());
-      attrs(wrap, { 'data-awsl-word': word });
-
-      append(wrap, () => create('span', [], {
-        style: {
-          'padding': '4px 8px',
-        },
-        html: word,
-      }));
-
-      const del = append(wrap, () => createIconBtn('删除', 'cross'));
-      attrs(del, { 'data-awsl-word-index': String(index) });
+      insertBefore(container, add, () => {
+        const chip = createChip('close',
+          (content) => html(content, word),
+          () => {
+            currentWords.splice(index, 1);
+            fillWords();
+          });
+        return attrs(chip, { 'data-awsl-word': word });
+      });
     }
   }
 
