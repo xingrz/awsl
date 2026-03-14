@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWSL
 // @namespace    https://github.com/xingrz
-// @version      2.8.3
+// @version      2.8.4
 // @description  Auto AWSLing
 // @author       XiNGRZ <hi@xingrz.me>
 // @license      WTFPL
@@ -304,44 +304,47 @@ function createButton(text, type = 'default', classes = []) {
         ]),
     ]);
 }
+function createChip(type, content, onClick) {
+    return create('div', ['woo-panel-main', 'woo-panel-top', 'woo-panel-right', 'woo-panel-bottom', 'woo-panel-left', '_lsort2_19lzx_23'], {}, [
+        () => create('div', ['woo-box-flex', 'woo-box-alignCenter', '_lsort2in_19lzx_30', '_lsort2in_19lzx_30'], {}, [
+            () => content(create('div', ['wbpro-textcut'])),
+            () => create('i', ['woo-font', `woo-font--${type}`, 'woo-fonticon-multi', 'woo-fonticon-dark'], {
+                events: { click: onClick },
+            }),
+        ]),
+    ]);
+}
 function createModal(title, content) {
     const app = $(document.body, '#app');
     if (!app)
         return;
-    append(app, () => create('div', [
-        'woo-box-flex',
-        'woo-box-alignCenter',
-        'woo-box-justifyCenter',
-        'woo-modal-wrap',
-    ], {}, [
+    append(app, () => create('div', ['woo-box-flex', 'woo-box-alignCenter', 'woo-box-justifyCenter', 'woo-modal-wrap'], {}, [
         (modal) => create('div', ['woo-modal-main'], {}, [
             () => create('div', ['wbpro-layer'], {}, [
                 () => create('div', ['woo-panel-main', 'woo-panel-bottom'], {}, [
-                    () => create('div', ['wbpro-layer-tit', 'woo-box-flex'], {}, [
-                        () => create('div', ['wbpro-layer-tit-text', 'woo-box-item-flex'], {
+                    () => create('div', ['woo-box-flex', 'wbpro-layer-tit'], {}, [
+                        () => create('div', ['woo-box-item-flex', 'wbpro-layer-tit-text'], {
                             style: { 'align-self': 'center' },
                             html: title,
                         }),
-                        () => {
-                            const close = create('div', [
-                                'wbpro-layer-tit-opt',
-                                'woo-box-flex',
-                                'woo-box-alignCenter',
-                                'woo-box-justifyCenter',
-                            ], {
-                                html: `<i class="woo-font woo-font--cross"></i>`,
-                            });
-                            return on(close, 'click', () => modal.remove());
-                        },
+                        () => create('div', [
+                            'woo-box-flex',
+                            'woo-box-alignCenter',
+                            'woo-box-justifyCenter',
+                            'wbpro-layer-tit-opt',
+                        ], {
+                            events: { click: () => modal.remove() },
+                        }, [
+                            () => create('i', ['woo-font', 'woo-font--cross'])
+                        ]),
                     ]),
                 ]),
                 ...content(modal),
             ]),
         ]),
-        (modal) => {
-            const mask = create('div', ['woo-modal-mask']);
-            return on(mask, 'click', () => modal.remove());
-        },
+        (modal) => create('div', ['woo-modal-mask'], {
+            events: { click: () => modal.remove() },
+        }),
     ]));
 }
 
@@ -483,36 +486,11 @@ function showCustom(ctx) {
             'gap': '8px',
         },
     });
-    function createIconBtn(title, icon) {
-        return create('i', ['woo-font', `woo-font--${icon}`], {
-            style: {
-                'color': 'var(--w-fonticon)',
-                'cursor': 'pointer',
-                'margin': '0 8px',
-            },
-            attrs: { title },
-        });
-    }
-    function createItemWrap() {
-        return create('div', [
-            'woo-box-flex',
-            'woo-box-alignCenter',
-        ], {
-            style: {
-                'border': '1px solid var(--w-color-gray-7)',
-                'border-radius': 'var(--w-border-radius)',
-                'color': 'var(--w-main)',
-                'font-size': '13px',
-                'height': '28px',
-            },
-        });
-    }
     const currentWords = [...words];
     const add = append(container, () => {
-        const wrap = createItemWrap();
-        const input = append(wrap, () => create('input', [], {
+        const input = create('input', [], {
             style: {
-                'padding': '4px 8px',
+                'padding': '4px',
                 'color': 'var(--w-main)',
                 'font-size': '13px',
                 'border': 'none',
@@ -520,9 +498,8 @@ function showCustom(ctx) {
                 'background': 'none',
             },
             attrs: { placeholder: '添加短语' },
-        }));
-        const btn = append(wrap, () => createIconBtn('添加', 'check'));
-        on(btn, 'click', () => {
+        });
+        const chip = createChip('add', () => input, () => {
             const value = input.value.trim();
             if (value) {
                 currentWords.push(value);
@@ -530,31 +507,20 @@ function showCustom(ctx) {
                 fillWords();
             }
         });
-        return wrap;
-    });
-    on(container, 'click', (e) => {
-        if (e.target.matches('[data-awsl-word-index]')) {
-            e.stopPropagation();
-            const index = Number(attr(e.target, 'data-awsl-word-index'));
-            currentWords.splice(index, 1);
-            fillWords();
-        }
+        return chip;
     });
     function fillWords() {
         for (const el of $$(container, '[data-awsl-word]')) {
             el.remove();
         }
         for (const [index, word] of currentWords.entries()) {
-            const wrap = insertBefore(container, add, () => createItemWrap());
-            attrs(wrap, { 'data-awsl-word': word });
-            append(wrap, () => create('span', [], {
-                style: {
-                    'padding': '4px 8px',
-                },
-                html: word,
-            }));
-            const del = append(wrap, () => createIconBtn('删除', 'cross'));
-            attrs(del, { 'data-awsl-word-index': String(index) });
+            insertBefore(container, add, () => {
+                const chip = createChip('close', (content) => html(content, word), () => {
+                    currentWords.splice(index, 1);
+                    fillWords();
+                });
+                return attrs(chip, { 'data-awsl-word': word });
+            });
         }
     }
     fillWords();
